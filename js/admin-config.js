@@ -2,253 +2,283 @@
 // StudioOS Admin Panel - Supabase Config
 // ================================
 
-const ADMIN_SUPABASE_URL =
-"https://gnnaaagvlrmdveqxicob.supabase.co"
+(function () {
+  "use strict";
 
-const ADMIN_SUPABASE_ANON_KEY =
-"sb_publishable_TnjoiedXWPbSjjqh2tmfsQ_kpiIMaND"
+  const ADMIN_SUPABASE_URL =
+  "https://gnnaaagvlrmdveqxicob.supabase.co"
 
-window.ADMIN_SUPABASE_URL = ADMIN_SUPABASE_URL
-window.ADMIN_SUPABASE_ANON_KEY = ADMIN_SUPABASE_ANON_KEY
-window.SUPABASE_ANON_KEY = ADMIN_SUPABASE_ANON_KEY
+  const ADMIN_SUPABASE_ANON_KEY =
+  "sb_publishable_TnjoiedXWPbSjjqh2tmfsQ_kpiIMaND"
 
-// ================================
-// INTERNAL STATE
-// ================================
+  window.ADMIN_SUPABASE_URL = ADMIN_SUPABASE_URL
+  window.ADMIN_SUPABASE_ANON_KEY = ADMIN_SUPABASE_ANON_KEY
+  window.SUPABASE_ANON_KEY = ADMIN_SUPABASE_ANON_KEY
 
-let adminSupabaseClient = null
-let adminSupabaseInitPromise = null
+  // ================================
+  // INTERNAL STATE
+  // ================================
 
-// ================================
-// WAIT FOR SUPABASE CDN
-// ================================
+  let adminSupabaseClient = null
+  let adminSupabaseInitPromise = null
 
-function waitForAdminSupabaseCDN(timeoutMs = 10000){
+  // ================================
+  // WAIT FOR SUPABASE CDN
+  // ================================
 
-return new Promise((resolve, reject)=>{
+  function waitForAdminSupabaseCDN(timeoutMs = 10000){
 
-const start = Date.now()
+  return new Promise((resolve, reject)=>{
 
-const check = () => {
+  const start = Date.now()
 
-if(window.supabase && typeof window.supabase.createClient === "function"){
-resolve()
-return
-}
+  const check = () => {
 
-if(Date.now() - start >= timeoutMs){
-reject(new Error("Supabase CDN not loaded"))
-return
-}
+  if(window.supabase && typeof window.supabase.createClient === "function"){
+  resolve()
+  return
+  }
 
-setTimeout(check, 50)
+  if(Date.now() - start >= timeoutMs){
+  reject(new Error("Supabase CDN not loaded"))
+  return
+  }
 
-}
+  setTimeout(check, 50)
 
-check()
+  }
 
-})
+  check()
 
-}
+  })
 
-// ================================
-// CREATE ADMIN SUPABASE CLIENT
-// ================================
+  }
 
-async function initializeAdminSupabase(){
+  // ================================
+  // CREATE ADMIN SUPABASE CLIENT
+  // ================================
 
-if(window.adminSupabaseClient){
-return window.adminSupabaseClient
-}
+  async function initializeAdminSupabase(){
 
-if(adminSupabaseInitPromise){
-return adminSupabaseInitPromise
-}
+  if(window.adminSupabaseClient){
+  return window.adminSupabaseClient
+  }
 
-adminSupabaseInitPromise = (async ()=>{
+  if(adminSupabaseInitPromise){
+  return adminSupabaseInitPromise
+  }
 
-try{
+  adminSupabaseInitPromise = (async ()=>{
 
-await waitForAdminSupabaseCDN()
+  try{
 
-if(window.adminSupabaseClient){
-return window.adminSupabaseClient
-}
+  await waitForAdminSupabaseCDN()
 
-adminSupabaseClient = window.supabase.createClient(
-ADMIN_SUPABASE_URL,
-ADMIN_SUPABASE_ANON_KEY,
-{
-auth:{
-persistSession:true,
-autoRefreshToken:true,
-detectSessionInUrl:true
-}
-}
-)
+  if(window.adminSupabaseClient){
+  return window.adminSupabaseClient
+  }
 
-window.adminSupabaseClient = adminSupabaseClient
-return adminSupabaseClient
+  adminSupabaseClient = window.supabase.createClient(
+  ADMIN_SUPABASE_URL,
+  ADMIN_SUPABASE_ANON_KEY,
+  {
+  auth:{
+  persistSession:true,
+  autoRefreshToken:true,
+  detectSessionInUrl:true
+  }
+  }
+  )
 
-}catch(err){
+  window.adminSupabaseClient = adminSupabaseClient
+  return adminSupabaseClient
 
-adminSupabaseInitPromise = null
-console.error("Admin Supabase initialization failed:", err)
-throw err
+  }catch(err){
 
-}
+  adminSupabaseInitPromise = null
+  console.error("Admin Supabase initialization failed:", err)
+  throw err
 
-})()
+  }
 
-return adminSupabaseInitPromise
+  })()
 
-}
+  return adminSupabaseInitPromise
 
-// ================================
-// SAFE ADMIN SUPABASE ACCESS
-// ================================
+  }
 
-window.getAdminSupabase = async function(){
+  // ================================
+  // SAFE ADMIN SUPABASE ACCESS
+  // ================================
 
-if(window.adminSupabaseClient){
-return window.adminSupabaseClient
-}
+  async function getAdminSupabase(){
 
-return await initializeAdminSupabase()
+  if(window.adminSupabaseClient){
+  return window.adminSupabaseClient
+  }
 
-}
+  return await initializeAdminSupabase()
 
-// ================================
-// SAFE ADMIN SESSION
-// ================================
+  }
 
-window.getAdminSession = async function(){
+  // ================================
+  // SAFE ADMIN SESSION
+  // ================================
 
-try{
+  async function getAdminSession(){
 
-const supabase = await window.getAdminSupabase()
-if(!supabase) return null
+  try{
 
-const { data, error } = await supabase.auth.getSession()
+  const supabase = await getAdminSupabase()
+  if(!supabase) return null
 
-if(error){
-console.error("Admin session fetch error:", error)
-return null
-}
+  const { data, error } = await supabase.auth.getSession()
 
-return data?.session || null
+  if(error){
+  console.error("Admin session fetch error:", error)
+  return null
+  }
 
-}catch(err){
-console.error("Admin session fetch failed:", err)
-return null
-}
+  return data?.session || null
 
-}
+  }catch(err){
+  console.error("Admin session fetch failed:", err)
+  return null
+  }
 
-// ================================
-// SAFE ADMIN USER
-// ================================
+  }
 
-window.getAdminUser = async function(){
+  // ================================
+  // SAFE ADMIN USER
+  // ================================
 
-try{
+  async function getAdminUser(){
 
-const supabase = await window.getAdminSupabase()
-if(!supabase) return null
+  try{
 
-const { data, error } = await supabase.auth.getUser()
+  const supabase = await getAdminSupabase()
+  if(!supabase) return null
 
-if(error){
-console.error("Admin user fetch error:", error)
-return null
-}
+  const { data, error } = await supabase.auth.getUser()
 
-return data?.user || null
+  if(error){
+  console.error("Admin user fetch error:", error)
+  return null
+  }
 
-}catch(err){
-console.error("Admin user fetch failed:", err)
-return null
-}
+  return data?.user || null
 
-}
+  }catch(err){
+  console.error("Admin user fetch failed:", err)
+  return null
+  }
 
-// ================================
-// ADMIN PROFILE / ROLE CHECK
-// ================================
+  }
 
-window.getAdminProfile = async function(){
+  // ================================
+  // ADMIN PROFILE / ROLE CHECK
+  // ================================
 
-try{
+  async function getAdminProfile(){
 
-const supabase = await window.getAdminSupabase()
-const user = await window.getAdminUser()
+  try{
 
-if(!supabase || !user){
-return null
-}
+  const supabase = await getAdminSupabase()
+  const user = await getAdminUser()
 
-const { data, error } = await supabase
-.from("admin_users")
-.select("id,user_id,email,role,is_active,created_at,updated_at")
-.eq("user_id", user.id)
-.eq("is_active", true)
-.maybeSingle()
+  if(!supabase || !user){
+  return null
+  }
 
-if(error){
-console.error("Admin profile fetch error:", error)
-return null
-}
+  const { data, error } = await supabase
+  .from("admin_users")
+  .select("id,user_id,email,role,is_active,created_at,updated_at")
+  .eq("user_id", user.id)
+  .eq("is_active", true)
+  .maybeSingle()
 
-return data || null
+  if(error){
+  console.error("Admin profile fetch error:", error)
+  return null
+  }
 
-}catch(err){
-console.error("Admin profile fetch failed:", err)
-return null
-}
+  return data || null
 
-}
+  }catch(err){
+  console.error("Admin profile fetch failed:", err)
+  return null
+  }
 
-window.requireAdminAccess = async function(){
+  }
 
-const session = await window.getAdminSession()
+  async function requireAdminAccess(){
 
-if(!session?.access_token){
-return {
-allowed:false,
-reason:"not_authenticated",
-session:null,
-user:null,
-profile:null
-}
-}
+  const session = await getAdminSession()
 
-const user = await window.getAdminUser()
-const profile = await window.getAdminProfile()
+  if(!session?.access_token){
+  return {
+  allowed:false,
+  reason:"not_authenticated",
+  session:null,
+  user:null,
+  profile:null
+  }
+  }
 
-if(!user || !profile || profile.is_active !== true){
-return {
-allowed:false,
-reason:"not_admin",
-session,
-user,
-profile:null
-}
-}
+  const user = await getAdminUser()
+  const profile = await getAdminProfile()
 
-return {
-allowed:true,
-reason:"admin_allowed",
-session,
-user,
-profile
-}
+  if(!user || !profile || profile.is_active !== true){
+  return {
+  allowed:false,
+  reason:"not_admin",
+  session,
+  user,
+  profile:null
+  }
+  }
 
-}
+  return {
+  allowed:true,
+  reason:"admin_allowed",
+  session,
+  user,
+  profile
+  }
 
-// ================================
-// PRELOAD
-// ================================
+  }
 
-initializeAdminSupabase().catch(err=>{
-console.error("Admin Supabase preload failed:", err)
-})
+  // ================================
+  // GLOBAL BACKWARD-COMPATIBLE API
+  // ================================
+
+  window.getAdminSupabase = getAdminSupabase
+  window.getAdminSession = getAdminSession
+  window.getAdminUser = getAdminUser
+  window.getAdminProfile = getAdminProfile
+  window.requireAdminAccess = requireAdminAccess
+
+  // ================================
+  // REQUIRED OBJECT API FOR ADMIN MODULES
+  // ================================
+
+  window.AdminConfig = {
+  url: ADMIN_SUPABASE_URL,
+  anonKey: ADMIN_SUPABASE_ANON_KEY,
+  getSupabase: getAdminSupabase,
+  getSession: getAdminSession,
+  getUser: getAdminUser,
+  getAdminProfile: getAdminProfile,
+  requireAdminAccess: requireAdminAccess,
+  initialize: initializeAdminSupabase
+  }
+
+  // ================================
+  // PRELOAD
+  // ================================
+
+  initializeAdminSupabase().catch(err=>{
+  console.error("Admin Supabase preload failed:", err)
+  })
+
+})();
