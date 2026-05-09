@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>StudioOS Admin Dashboard</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body class="min-h-screen text-white admin-bg">
+
+<div id="adminApp" class="min-h-screen">
+
+  <header class="sticky top-0 z-40 border-b border-white/10 bg-slate-950/75 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <div>
+        <div class="text-xs uppercase tracking-[0.22em] text-indigo-200 font-bold">StudioOS</div>
+        <h1 class="text-xl sm:text-2xl font-extrabold">Admin Dashboard</h1>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:block text-right">
+          <div id="adminEmailLabel" class="text-sm font-semibold text-white">Checking...</div>
+          <div id="adminRoleLabel" class="text-xs text-slate-400">Admin</div>
+        </div>
+
+        <button
+          id="adminLogoutBtn"
+          type="button"
+          class="rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-2 text-sm font-bold transition"
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+    <section class="admin-glass rounded-3xl p-5 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-[0.16em] uppercase admin-pill">
+            Live Overview
+          </div>
+          <h2 class="mt-4 text-2xl font-extrabold">Business control center</h2>
+          <p class="mt-2 text-sm text-slate-300">
+            Monitor users, payments, subscriptions, storage, and pending payouts from one place.
+          </p>
+        </div>
+
+        <button
+          id="refreshDashboardBtn"
+          type="button"
+          class="rounded-2xl bg-indigo-600 hover:bg-indigo-700 px-5 py-3 text-sm font-bold transition"
+        >
+          Refresh
+        </button>
+      </div>
+    </section>
+
+    <section id="dashboardError" class="hidden rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200"></section>
+
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="admin-card">
+        <div class="admin-card-label">Total Users</div>
+        <div id="totalUsersCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Paid Users</div>
+        <div id="paidUsersCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Total Events</div>
+        <div id="totalEventsCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Total Photos</div>
+        <div id="totalPhotosCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Published Websites</div>
+        <div id="publishedWebsitesCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Photo Sales</div>
+        <div id="photoSalesCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Pending Payouts</div>
+        <div id="pendingPayoutsCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Storage Used</div>
+        <div id="storageUsedCard" class="admin-card-value">—</div>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="admin-panel">
+        <div class="admin-panel-header">
+          <div>
+            <h3 class="admin-panel-title">Recent Users</h3>
+            <p class="admin-panel-subtitle">Latest photographer accounts</p>
+          </div>
+        </div>
+
+        <div id="recentUsersList" class="admin-list">
+          <div class="admin-muted">Loading users...</div>
+        </div>
+      </div>
+
+      <div class="admin-panel">
+        <div class="admin-panel-header">
+          <div>
+            <h3 class="admin-panel-title">Recent Payments</h3>
+            <p class="admin-panel-subtitle">Latest payment records</p>
+          </div>
+        </div>
+
+        <div id="recentPaymentsList" class="admin-list">
+          <div class="admin-muted">Loading payments...</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel-header">
+        <div>
+          <h3 class="admin-panel-title">Quick Actions</h3>
+          <p class="admin-panel-subtitle">MVP modules will be activated one by one</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <button class="admin-action-btn" type="button" disabled>Users</button>
+        <button class="admin-action-btn" type="button" disabled>Payments</button>
+        <button class="admin-action-btn" type="button" disabled>Subscriptions</button>
+        <button class="admin-action-btn" type="button" disabled>Payouts</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="js/admin-config.js?v=20260509-admin-v1"></script>
+<script src="js/admin-auth.js?v=20260509-admin-v1"></script>
+<script src="js/admin-layout.js?v=20260509-admin-v1"></script>
+<script src="js/admin-dashboard.js?v=20260509-admin-v1"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    if (!window.AdminAuth || typeof window.AdminAuth.requireAdminPage !== "function") {
+      throw new Error("Admin auth module is not loaded.");
+    }
+
+    const authResult = await window.AdminAuth.requireAdminPage("admin-login.html");
+
+    if (window.AdminLayout && typeof window.AdminLayout.renderAdminProfile === "function") {
+      window.AdminLayout.renderAdminProfile(authResult?.profile || null);
+    }
+
+    if (window.AdminDashboard && typeof window.AdminDashboard.init === "function") {
+      await window.AdminDashboard.init();
+    }
+
+  } catch (err) {
+    console.error("Admin dashboard boot failed:", err);
+    const errorBox = document.getElementById("dashboardError");
+    if (errorBox) {
+      errorBox.textContent = err?.message || "Failed to load admin dashboard.";
+      errorBox.classList.remove("hidden");
+    }
+  }
+});
+</script>
+
+</body>
+</html>
