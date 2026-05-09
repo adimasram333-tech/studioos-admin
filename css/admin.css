@@ -1,0 +1,227 @@
+/* ================================
+   StudioOS Admin Panel Styles
+   Production-safe shared admin UI
+================================ */
+
+:root{
+  --admin-bg-start:#1e293b;
+  --admin-bg-end:#020617;
+  --admin-card:rgba(15,23,42,0.74);
+  --admin-card-soft:rgba(255,255,255,0.055);
+  --admin-border:rgba(255,255,255,0.10);
+  --admin-border-strong:rgba(129,140,248,0.26);
+  --admin-text:#ffffff;
+  --admin-muted:#94a3b8;
+  --admin-primary:#4f46e5;
+  --admin-primary-hover:#4338ca;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html{
+  min-height:100%;
+  background:#020617;
+}
+
+body{
+  margin:0;
+  min-height:100%;
+}
+
+.admin-bg{
+  background:
+    radial-gradient(circle at top left, rgba(79,70,229,0.20), transparent 32rem),
+    radial-gradient(circle at top right, rgba(14,165,233,0.12), transparent 28rem),
+    linear-gradient(135deg, var(--admin-bg-start), var(--admin-bg-end));
+}
+
+.admin-glass{
+  background:var(--admin-card);
+  border:1px solid var(--admin-border);
+  box-shadow:0 24px 80px rgba(0,0,0,0.34);
+  backdrop-filter:blur(18px);
+}
+
+.admin-pill{
+  background:rgba(99,102,241,0.16);
+  border:1px solid rgba(129,140,248,0.30);
+  color:#c7d2fe;
+}
+
+.admin-card{
+  min-height:8rem;
+  border-radius:1.5rem;
+  padding:1.15rem;
+  background:var(--admin-card-soft);
+  border:1px solid var(--admin-border);
+  box-shadow:0 16px 40px rgba(0,0,0,0.16);
+}
+
+.admin-card-label{
+  font-size:0.74rem;
+  line-height:1rem;
+  font-weight:800;
+  letter-spacing:0.13em;
+  text-transform:uppercase;
+  color:var(--admin-muted);
+}
+
+.admin-card-value{
+  margin-top:0.8rem;
+  font-size:2rem;
+  line-height:2.25rem;
+  font-weight:900;
+  color:var(--admin-text);
+  letter-spacing:-0.04em;
+}
+
+.admin-panel{
+  border-radius:1.5rem;
+  padding:1rem;
+  background:var(--admin-card-soft);
+  border:1px solid var(--admin-border);
+  box-shadow:0 16px 40px rgba(0,0,0,0.16);
+}
+
+.admin-panel-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:1rem;
+  padding:0.25rem 0.25rem 0.9rem;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.admin-panel-title{
+  margin:0;
+  font-size:1rem;
+  line-height:1.4rem;
+  font-weight:900;
+  color:#ffffff;
+}
+
+.admin-panel-subtitle{
+  margin:0.2rem 0 0;
+  font-size:0.78rem;
+  line-height:1.15rem;
+  color:var(--admin-muted);
+}
+
+.admin-list{
+  display:flex;
+  flex-direction:column;
+  gap:0.7rem;
+  padding-top:0.9rem;
+}
+
+.admin-list-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+  padding:0.85rem;
+  border-radius:1rem;
+  background:rgba(255,255,255,0.045);
+  border:1px solid rgba(255,255,255,0.07);
+}
+
+.admin-list-title{
+  font-size:0.9rem;
+  font-weight:800;
+  color:#ffffff;
+  word-break:break-word;
+}
+
+.admin-list-subtitle{
+  margin-top:0.15rem;
+  font-size:0.76rem;
+  color:var(--admin-muted);
+  word-break:break-word;
+}
+
+.admin-badge{
+  flex-shrink:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  padding:0.3rem 0.55rem;
+  font-size:0.68rem;
+  line-height:0.85rem;
+  font-weight:900;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  border:1px solid rgba(255,255,255,0.10);
+}
+
+.admin-badge-success{
+  background:rgba(34,197,94,0.13);
+  color:#bbf7d0;
+  border-color:rgba(34,197,94,0.22);
+}
+
+.admin-badge-muted{
+  background:rgba(148,163,184,0.13);
+  color:#cbd5e1;
+  border-color:rgba(148,163,184,0.20);
+}
+
+.admin-badge-warning{
+  background:rgba(245,158,11,0.13);
+  color:#fde68a;
+  border-color:rgba(245,158,11,0.24);
+}
+
+.admin-muted{
+  padding:0.85rem;
+  border-radius:1rem;
+  background:rgba(255,255,255,0.035);
+  border:1px solid rgba(255,255,255,0.06);
+  color:var(--admin-muted);
+  font-size:0.85rem;
+}
+
+.admin-action-btn{
+  border-radius:1rem;
+  padding:0.95rem 1rem;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.08);
+  color:#e2e8f0;
+  font-size:0.86rem;
+  font-weight:800;
+  transition:0.18s ease;
+}
+
+.admin-action-btn:not(:disabled):hover{
+  background:rgba(79,70,229,0.26);
+  border-color:rgba(129,140,248,0.35);
+}
+
+.admin-action-btn:disabled{
+  opacity:0.55;
+  cursor:not-allowed;
+}
+
+@media (max-width: 640px){
+  .admin-card{
+    min-height:7.2rem;
+    border-radius:1.25rem;
+  }
+
+  .admin-card-value{
+    font-size:1.7rem;
+    line-height:2rem;
+  }
+
+  .admin-panel{
+    border-radius:1.25rem;
+  }
+
+  .admin-list-item{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:0.55rem;
+  }
+}
