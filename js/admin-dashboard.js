@@ -33,7 +33,7 @@
         "amount"
       ],
       recentPayments: [
-        "id,user_id,amount"
+        "id,amount"
       ]
     },
     template_purchases: {
