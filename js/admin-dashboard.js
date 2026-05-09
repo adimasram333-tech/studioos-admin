@@ -19,6 +19,30 @@
     recentPayments: []
   };
 
+  const DASHBOARD_CONFIRMED_SELECTS = {
+    photographer_settings: {
+      recentUsers: [
+        "user_id,plan,is_paid,subscription_status"
+      ],
+      storage: [
+        "used_storage_bytes"
+      ]
+    },
+    image_purchases: {
+      photoSales: [
+        "amount"
+      ],
+      recentPayments: [
+        "id,user_id,amount"
+      ]
+    },
+    template_purchases: {
+      recentPayments: [
+        "id,user_id,amount,status,created_at"
+      ]
+    }
+  };
+
   function setText(id, value) {
     const el = document.getElementById(id);
     if (el) {
@@ -212,6 +236,13 @@
   async function fetchRowsWithSelectFallbacks(supabase, table, selectVariants, options = {}) {
     if (!supabase || !table || !Array.isArray(selectVariants)) return [];
 
+    /*
+      Production-safe rule:
+      This helper is kept to preserve the original dashboard structure, but it must not
+      blindly probe guessed columns. Callers now pass only confirmed schema-safe selects.
+      This prevents Supabase/PostgREST 400 noise while keeping the same function flow.
+    */
+
     for (const selectClause of selectVariants) {
       try {
         let query = supabase
@@ -241,7 +272,7 @@
           return data;
         }
       } catch (_err) {
-        // Try next select variant or table.
+        // Schema-safe callers should not reach this path. Return empty on unexpected failure.
       }
     }
 
@@ -267,12 +298,11 @@
   }
 
   async function fetchStorageUsedBytes(supabase) {
-    const rows = await fetchRowsWithSelectFallbacks(supabase, "photographer_settings", [
-      "used_storage_bytes",
-      "storage_used_bytes",
-      "total_storage_used",
-      "user_id"
-    ]);
+    const rows = await fetchRowsWithSelectFallbacks(
+      supabase,
+      "photographer_settings",
+      DASHBOARD_CONFIRMED_SELECTS.photographer_settings.storage
+    );
 
     if (!Array.isArray(rows) || rows.length === 0) {
       return 0;
@@ -290,14 +320,11 @@
   }
 
   async function fetchPhotoSalesRevenue(supabase) {
-    const rows = await fetchRowsWithSelectFallbacks(supabase, "image_purchases", [
-      "amount,status,payment_status",
-      "price,status,payment_status",
-      "photographer_amount,platform_amount,status,payment_status",
-      "amount",
-      "price",
-      "id"
-    ]);
+    const rows = await fetchRowsWithSelectFallbacks(
+      supabase,
+      "image_purchases",
+      DASHBOARD_CONFIRMED_SELECTS.image_purchases.photoSales
+    );
 
     if (!Array.isArray(rows) || rows.length === 0) {
       return 0;
@@ -312,61 +339,42 @@
   }
 
   async function fetchPendingPayoutsCount(supabase) {
-    const candidateTables = ["payout_requests", "withdrawal_requests", "payouts"];
-
-    for (const table of candidateTables) {
-      try {
-        const { count, error } = await supabase
-          .from(table)
-          .select("id", { count: "exact", head: true })
-          .eq("status", "pending");
-
-        if (!error) {
-          return Number(count || 0);
-        }
-      } catch (_err) {
-        // Try next table name.
-      }
-    }
-
+    /*
+      Payout module is not wired yet. Keeping this function in place preserves the
+      dashboard architecture without probing optional payout tables and creating
+      production console 400 errors.
+    */
+    void supabase;
     return 0;
   }
 
   async function fetchRecentUsers(supabase) {
-    const rows = await fetchRowsWithSelectFallbacks(supabase, "photographer_settings", [
-      "user_id,plan,is_paid,subscription_status",
-      "user_id,plan,is_paid",
-      "user_id,subscription_status",
-      "user_id"
-    ], {
-      limit: 5
-    });
+    const rows = await fetchRowsWithSelectFallbacks(
+      supabase,
+      "photographer_settings",
+      DASHBOARD_CONFIRMED_SELECTS.photographer_settings.recentUsers,
+      {
+        limit: 5
+      }
+    );
 
     return Array.isArray(rows) ? rows.slice(0, 5) : [];
   }
 
   async function fetchPaymentRowsFromTable(supabase, table) {
-    const selectVariants = [
-      "id,user_id,amount,status,payment_status,created_at",
-      "id,user_id,amount,status,payment_status",
-      "id,user_id,amount,status,created_at",
-      "id,user_id,amount,payment_status,created_at",
-      "id,user_id,amount,created_at",
-      "id,user_id,amount",
-      "id,user_id,price,status,payment_status,created_at",
-      "id,user_id,price,status,payment_status",
-      "id,user_id,price,created_at",
-      "id,user_id,price",
-      "id,user_id,photographer_amount,platform_amount,status,payment_status,created_at",
-      "id,user_id,photographer_amount,platform_amount,status,payment_status",
-      "id,user_id,status,payment_status,created_at",
-      "id,user_id,status,payment_status",
-      "id,user_id,created_at",
-      "id,user_id",
-      "id"
-    ];
+    const safeTable = String(table || "").trim();
+    const confirmedSelects =
+      safeTable === "template_purchases"
+        ? DASHBOARD_CONFIRMED_SELECTS.template_purchases.recentPayments
+        : safeTable === "image_purchases"
+          ? DASHBOARD_CONFIRMED_SELECTS.image_purchases.recentPayments
+          : [];
 
-    const rows = await fetchRowsWithSelectFallbacks(supabase, table, selectVariants, {
+    if (!confirmedSelects.length) {
+      return [];
+    }
+
+    const rows = await fetchRowsWithSelectFallbacks(supabase, safeTable, confirmedSelects, {
       limit: 5
     });
 
@@ -376,15 +384,13 @@
 
     return rows.map((row) => ({
       ...row,
-      source_table: table
+      source_table: safeTable
     }));
   }
 
   async function fetchRecentPayments(supabase) {
     const candidateTables = [
-      "subscription_payments",
       "template_purchases",
-      "page_purchases",
       "image_purchases"
     ];
 
