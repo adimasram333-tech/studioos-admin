@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>StudioOS Admin Login</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body class="min-h-screen text-white admin-bg flex items-center justify-center px-4">
+
+<main class="w-full max-w-md">
+  <section class="admin-glass rounded-3xl p-6 sm:p-8 shadow-2xl">
+
+    <div class="mb-7">
+      <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-[0.18em] uppercase admin-pill">
+        StudioOS Admin
+      </div>
+
+      <h1 class="mt-4 text-3xl font-extrabold leading-tight">
+        Secure admin login
+      </h1>
+
+      <p class="mt-2 text-sm text-slate-300">
+        Access is restricted to approved StudioOS admin accounts only.
+      </p>
+    </div>
+
+    <form id="adminLoginForm" class="space-y-4">
+      <div>
+        <label for="adminEmail" class="block text-xs font-semibold text-slate-300 mb-2">
+          Admin Email
+        </label>
+        <input
+          id="adminEmail"
+          type="email"
+          autocomplete="email"
+          required
+          placeholder="admin@example.com"
+          class="w-full rounded-2xl bg-white/8 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+        >
+      </div>
+
+      <div>
+        <label for="adminPassword" class="block text-xs font-semibold text-slate-300 mb-2">
+          Password
+        </label>
+        <input
+          id="adminPassword"
+          type="password"
+          autocomplete="current-password"
+          required
+          placeholder="Enter password"
+          class="w-full rounded-2xl bg-white/8 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+        >
+      </div>
+
+      <div id="adminLoginMessage" class="hidden rounded-2xl px-4 py-3 text-sm"></div>
+
+      <button
+        id="adminLoginBtn"
+        type="submit"
+        class="w-full rounded-2xl bg-indigo-600 hover:bg-indigo-700 px-4 py-3 text-sm font-bold transition disabled:opacity-60 disabled:pointer-events-none"
+      >
+        Login to Admin Panel
+      </button>
+    </form>
+
+    <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-slate-400">
+      Use the owner/admin email registered in Supabase Auth. Non-admin users will be blocked after login.
+    </div>
+
+  </section>
+</main>
+
+<script src="js/admin-config.js?v=20260509-admin-v1"></script>
+<script src="js/admin-auth.js?v=20260509-admin-v1"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const form = document.getElementById("adminLoginForm");
+  const emailInput = document.getElementById("adminEmail");
+  const passwordInput = document.getElementById("adminPassword");
+  const button = document.getElementById("adminLoginBtn");
+  const messageBox = document.getElementById("adminLoginMessage");
+
+  function showMessage(text, type = "error") {
+    messageBox.textContent = text;
+    messageBox.classList.remove("hidden", "bg-red-500/10", "border-red-500/20", "text-red-200", "bg-emerald-500/10", "border-emerald-500/20", "text-emerald-200");
+    messageBox.classList.add("border");
+
+    if (type === "success") {
+      messageBox.classList.add("bg-emerald-500/10", "border-emerald-500/20", "text-emerald-200");
+    } else {
+      messageBox.classList.add("bg-red-500/10", "border-red-500/20", "text-red-200");
+    }
+  }
+
+  function setBusy(isBusy) {
+    button.disabled = isBusy;
+    button.textContent = isBusy ? "Checking access..." : "Login to Admin Panel";
+  }
+
+  try {
+    if (window.AdminAuth && typeof window.AdminAuth.redirectIfAdminSession === "function") {
+      await window.AdminAuth.redirectIfAdminSession("admin-dashboard.html");
+    }
+  } catch (err) {
+    console.warn("Existing admin session check skipped:", err);
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const email = String(emailInput.value || "").trim();
+    const password = String(passwordInput.value || "");
+
+    if (!email || !password) {
+      showMessage("Enter admin email and password.");
+      return;
+    }
+
+    try {
+      setBusy(true);
+
+      if (!window.AdminAuth || typeof window.AdminAuth.signInAdmin !== "function") {
+        throw new Error("Admin auth module is not loaded.");
+      }
+
+      const result = await window.AdminAuth.signInAdmin(email, password);
+
+      if (!result || result.success !== true) {
+        throw new Error(result?.error || "Admin login failed.");
+      }
+
+      showMessage("Admin access verified. Redirecting...", "success");
+
+      setTimeout(() => {
+        window.location.href = "admin-dashboard.html";
+      }, 350);
+
+    } catch (err) {
+      console.error("Admin login failed:", err);
+      showMessage(err?.message || "Admin login failed.");
+    } finally {
+      setBusy(false);
+    }
+  });
+});
+</script>
+
+</body>
+</html>
