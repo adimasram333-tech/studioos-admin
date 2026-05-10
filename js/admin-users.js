@@ -350,7 +350,28 @@
       return;
     }
 
-    list.innerHTML = users.map((user) => {
+    const headerRow = `
+      <div style="
+        display:grid;
+        grid-template-columns:minmax(0, 1fr) auto auto auto;
+        gap:0.65rem;
+        align-items:center;
+        padding:0 0.85rem 0.45rem;
+        color:#cbd5e1;
+        font-size:0.72rem;
+        line-height:1rem;
+        font-weight:900;
+        letter-spacing:0.06em;
+        text-transform:uppercase;
+      ">
+        <div>User</div>
+        <div style="min-width:4.25rem;text-align:center;">Plan</div>
+        <div style="min-width:5.75rem;text-align:center;">Sub Status</div>
+        <div style="min-width:6.3rem;text-align:center;">Account</div>
+      </div>
+    `;
+
+    const rowsHtml = users.map((user) => {
       const userId = String(user?.user_id || "");
       const plan = getPlanLabel(user);
       const status = getStatusLabel(user);
@@ -362,19 +383,25 @@
       const totalPhotos = formatNumber(user?.total_photos || 0);
 
       return `
-        <div class="admin-list-item" data-admin-user-id="${escapeHtml(userId)}" style="cursor:pointer;">
+        <div class="admin-list-item" data-admin-user-id="${escapeHtml(userId)}" style="cursor:pointer;display:grid;grid-template-columns:minmax(0, 1fr) auto auto auto;gap:0.65rem;align-items:center;">
           <div>
             <button type="button" class="admin-list-title" data-open-admin-user="${escapeHtml(userId)}" style="background:transparent;border:0;padding:0;color:#ffffff;font:inherit;font-weight:800;text-align:left;cursor:pointer;">${escapeHtml(displayName)}</button>
             <div class="admin-list-subtitle">${escapeHtml(subtitle)} · Storage: ${escapeHtml(storage)} · Events: ${escapeHtml(totalEvents)} · Photos: ${escapeHtml(totalPhotos)}</div>
           </div>
-          <div class="flex flex-wrap gap-2">
+          <div style="min-width:4.25rem;text-align:center;">
             <span class="${getPlanBadgeClass(user)}">${escapeHtml(plan)}</span>
+          </div>
+          <div style="min-width:5.75rem;text-align:center;">
             <span class="${getStatusBadgeClass(user)}">${escapeHtml(status)}</span>
+          </div>
+          <div style="min-width:6.3rem;text-align:center;">
             <span class="${getBlockBadgeClass(user)}">${escapeHtml(blockLabel)}</span>
           </div>
         </div>
       `;
     }).join("");
+
+    list.innerHTML = headerRow + rowsHtml;
 
     list.querySelectorAll("[data-admin-user-id]").forEach((card) => {
       card.addEventListener("click", () => openUserDetailsModal(card.getAttribute("data-admin-user-id")));
