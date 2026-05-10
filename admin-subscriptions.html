@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>StudioOS Admin Subscriptions</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body class="min-h-screen text-white admin-bg">
+
+<div id="adminApp" class="min-h-screen">
+
+  <header class="sticky top-0 z-40 border-b border-white/10 bg-slate-950/75 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <div>
+        <div class="text-xs uppercase tracking-[0.22em] text-indigo-200 font-bold">StudioOS</div>
+        <h1 class="text-xl sm:text-2xl font-extrabold">Subscriptions Management</h1>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a
+          href="admin-dashboard.html"
+          class="rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-2 text-sm font-bold transition"
+        >
+          Dashboard
+        </a>
+
+        <div class="hidden sm:block text-right">
+          <div id="adminEmailLabel" class="text-sm font-semibold text-white">Checking...</div>
+          <div id="adminRoleLabel" class="text-xs text-slate-400">Admin</div>
+        </div>
+
+        <button
+          id="adminLogoutBtn"
+          type="button"
+          class="rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-2 text-sm font-bold transition"
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+    <section class="admin-glass rounded-3xl p-5 sm:p-6">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-[0.16em] uppercase admin-pill">
+            Subscriptions
+          </div>
+          <h2 class="mt-4 text-2xl font-extrabold">Subscription monitoring center</h2>
+          <p class="mt-2 text-sm text-slate-300">
+            Quickly monitor paid/free users, plan status, storage usage, AI usage, and expiry dates.
+          </p>
+        </div>
+
+        <button
+          id="refreshSubscriptionsBtn"
+          type="button"
+          class="rounded-2xl bg-indigo-600 hover:bg-indigo-700 px-5 py-3 text-sm font-bold transition"
+        >
+          Refresh
+        </button>
+      </div>
+    </section>
+
+    <section id="subscriptionsError" class="hidden rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200"></section>
+
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="admin-card">
+        <div class="admin-card-label">Active Paid Users</div>
+        <div id="activePaidCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Free Users</div>
+        <div id="freeUsersCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Inactive / Expired</div>
+        <div id="inactiveUsersCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Storage Used</div>
+        <div id="subscriptionStorageCard" class="admin-card-value">—</div>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel-header">
+        <div>
+          <h3 class="admin-panel-title">Subscription Directory</h3>
+          <p class="admin-panel-subtitle">Clean read-only view of plan, billing, expiry, storage, and AI usage</p>
+        </div>
+      </div>
+
+      <div class="pt-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+        <input
+          id="subscriptionSearchInput"
+          type="search"
+          placeholder="Search users..."
+          class="w-full rounded-2xl bg-slate-950/70 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+        >
+
+        <select
+          id="subscriptionFilter"
+          class="rounded-2xl bg-slate-950/70 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+        >
+          <option value="all">All Users</option>
+          <option value="active_paid">Active Paid</option>
+          <option value="free">Free Users</option>
+          <option value="inactive">Inactive / Expired</option>
+          <option value="blocked">Blocked</option>
+        </select>
+      </div>
+
+      <div id="subscriptionsList" class="admin-list mt-4">
+        <div class="admin-muted">Loading subscriptions...</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="js/admin-config.js?v=20260510-admin-session-v2"></script>
+<script src="js/admin-auth.js?v=20260510-admin-session-v2"></script>
+<script src="js/admin-layout.js?v=20260510-admin-session-v2"></script>
+<script src="js/admin-subscriptions.js?v=20260510-subscriptions-v1"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    if (!window.AdminAuth || typeof window.AdminAuth.requireAdminPage !== "function") {
+      throw new Error("Admin auth module is not loaded.");
+    }
+
+    const authResult = await window.AdminAuth.requireAdminPage("admin-login.html");
+
+    if (window.AdminLayout && typeof window.AdminLayout.renderAdminProfile === "function") {
+      window.AdminLayout.renderAdminProfile(authResult?.profile || null);
+    }
+
+    if (window.AdminSubscriptions && typeof window.AdminSubscriptions.init === "function") {
+      await window.AdminSubscriptions.init();
+    }
+
+  } catch (err) {
+    console.error("Admin subscriptions page boot failed:", err);
+    const errorBox = document.getElementById("subscriptionsError");
+    if (errorBox) {
+      errorBox.textContent = err?.message || "Failed to load subscriptions page.";
+      errorBox.classList.remove("hidden");
+    }
+  }
+});
+</script>
+
+</body>
+</html>
