@@ -366,7 +366,7 @@
       ">
         <div>User</div>
         <div style="min-width:4.25rem;text-align:center;">Plan</div>
-        <div style="min-width:5.75rem;text-align:center;">Sub Status</div>
+        <div style="min-width:6.75rem;text-align:center;">Subscription</div>
         <div style="min-width:6.3rem;text-align:center;">Account</div>
       </div>
     `;
@@ -391,7 +391,7 @@
           <div style="min-width:4.25rem;text-align:center;">
             <span class="${getPlanBadgeClass(user)}">${escapeHtml(plan)}</span>
           </div>
-          <div style="min-width:5.75rem;text-align:center;">
+          <div style="min-width:6.75rem;text-align:center;">
             <span class="${getStatusBadgeClass(user)}">${escapeHtml(status)}</span>
           </div>
           <div style="min-width:6.3rem;text-align:center;">
