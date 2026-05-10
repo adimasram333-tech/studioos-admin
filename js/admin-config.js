@@ -85,7 +85,8 @@
   auth:{
   persistSession:true,
   autoRefreshToken:true,
-  detectSessionInUrl:true
+  detectSessionInUrl:true,
+  storageKey:"studioos-admin-auth-session"
   }
   }
   )
