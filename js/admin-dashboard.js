@@ -22,7 +22,7 @@
   const DASHBOARD_CONFIRMED_SELECTS = {
     photographer_settings: {
       recentUsers: [
-        "user_id,plan,is_paid,subscription_status"
+        "user_id,studio_name,owner_name,phone,email,plan,is_paid,subscription_status"
       ],
       storage: [
         "used_storage_bytes"
@@ -406,6 +406,33 @@
     return sortRowsByBestDate(allPayments).slice(0, 5);
   }
 
+  function getUserDisplayName(user) {
+    const ownerName = String(user?.owner_name || "").trim();
+    const studioName = String(user?.studio_name || "").trim();
+
+    if (ownerName) return ownerName;
+    if (studioName) return studioName;
+
+    return "Unnamed User";
+  }
+
+  function getUserDisplaySubtitle(user) {
+    const studioName = String(user?.studio_name || "").trim();
+    const phone = String(user?.phone || "").trim();
+    const email = String(user?.email || "").trim();
+    const status = String(user?.subscription_status || (user?.is_paid ? "active" : "free")).toUpperCase();
+
+    const parts = [];
+
+    if (studioName) parts.push(studioName);
+    if (phone) parts.push(phone);
+    else if (email) parts.push(email);
+
+    parts.push(`Status: ${status}`);
+
+    return parts.join(" · ");
+  }
+
   function renderRecentUsers(users) {
     const list = document.getElementById("recentUsersList");
     if (!list) return;
@@ -416,15 +443,15 @@
     }
 
     list.innerHTML = users.map((user) => {
-      const userId = String(user?.user_id || "Unknown user");
+      const displayName = getUserDisplayName(user);
+      const subtitle = getUserDisplaySubtitle(user);
       const plan = getPlanLabel(user);
-      const status = String(user?.subscription_status || (user?.is_paid ? "active" : "free")).toUpperCase();
 
       return `
         <div class="admin-list-item">
           <div>
-            <div class="admin-list-title">${userId}</div>
-            <div class="admin-list-subtitle">Status: ${status}</div>
+            <div class="admin-list-title">${displayName}</div>
+            <div class="admin-list-subtitle">${subtitle}</div>
           </div>
           <span class="${getPlanBadgeClass(user)}">${plan}</span>
         </div>
