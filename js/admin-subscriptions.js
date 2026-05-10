@@ -354,14 +354,20 @@
       return;
     }
 
+    const gridStyle =
+      "display:grid;" +
+      "grid-template-columns:minmax(280px, 1fr) 78px 92px 104px minmax(132px, 154px) minmax(112px, 132px);" +
+      "gap:0.8rem;" +
+      "align-items:center;";
+
     const headerRow = `
-      <div style="display:grid;grid-template-columns:minmax(0, 1fr) auto auto auto auto auto;gap:0.65rem;align-items:center;padding:0 0.85rem 0.45rem;color:#cbd5e1;font-size:0.72rem;line-height:1rem;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;">
+      <div style="${gridStyle}padding:0 0.95rem 0.5rem;color:#cbd5e1;font-size:0.72rem;line-height:1rem;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;">
         <div>User</div>
-        <div style="min-width:4.8rem;text-align:center;">Plan</div>
-        <div style="min-width:5.8rem;text-align:center;">Billing</div>
-        <div style="min-width:6.8rem;text-align:center;">Status</div>
-        <div style="min-width:7.8rem;text-align:right;">Storage</div>
-        <div style="min-width:6.8rem;text-align:right;">Expiry</div>
+        <div style="text-align:center;">Plan</div>
+        <div style="text-align:center;">Billing</div>
+        <div style="text-align:center;">Status</div>
+        <div style="text-align:right;">Storage</div>
+        <div style="text-align:right;">Expiry</div>
       </div>
     `;
 
@@ -370,20 +376,20 @@
       const expiry = row?.plan_expires_at ? formatDate(row?.plan_expires_at) : "—";
 
       return `
-        <div class="admin-list-item" data-admin-subscription-id="${escapeHtml(userId)}" style="cursor:pointer;display:grid;grid-template-columns:minmax(0, 1fr) auto auto auto auto auto;gap:0.65rem;align-items:center;">
-          <div>
-            <button type="button" class="admin-list-title" style="background:transparent;border:0;padding:0;color:#ffffff;font:inherit;font-weight:800;text-align:left;cursor:pointer;">${escapeHtml(getDisplayName(row))}</button>
-            <div class="admin-list-subtitle">${escapeHtml(getDisplaySubtitle(row))} · AI: ${escapeHtml(getAiText(row))}</div>
+        <div class="admin-list-item" data-admin-subscription-id="${escapeHtml(userId)}" style="cursor:pointer;${gridStyle}">
+          <div style="min-width:0;">
+            <button type="button" class="admin-list-title" style="background:transparent;border:0;padding:0;max-width:100%;color:#ffffff;font:inherit;font-weight:800;text-align:left;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(getDisplayName(row))}</button>
+            <div class="admin-list-subtitle" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(getDisplaySubtitle(row))} · AI: ${escapeHtml(getAiText(row))}</div>
           </div>
-          <div style="min-width:4.8rem;text-align:center;">
+          <div style="text-align:center;">
             <span class="${getPlanBadgeClass(row)}">${escapeHtml(getPlanLabel(row))}</span>
           </div>
-          <div style="min-width:5.8rem;text-align:center;font-weight:800;color:#cbd5e1;">${escapeHtml(getBillingLabel(row))}</div>
-          <div style="min-width:6.8rem;text-align:center;">
+          <div style="text-align:center;font-weight:800;color:#cbd5e1;">${escapeHtml(getBillingLabel(row))}</div>
+          <div style="text-align:center;">
             <span class="${getStatusBadgeClass(row)}">${escapeHtml(getStatusLabel(row))}</span>
           </div>
-          <div style="min-width:7.8rem;text-align:right;font-weight:900;color:#ffffff;">${escapeHtml(getStorageText(row))}</div>
-          <div style="min-width:6.8rem;text-align:right;font-weight:900;color:#ffffff;">${escapeHtml(expiry)}</div>
+          <div style="text-align:right;font-weight:900;color:#ffffff;white-space:nowrap;">${escapeHtml(getStorageText(row))}</div>
+          <div style="text-align:right;font-weight:900;color:#ffffff;white-space:nowrap;">${escapeHtml(expiry)}</div>
         </div>
       `;
     }).join("");
