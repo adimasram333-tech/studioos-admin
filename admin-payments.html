@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>StudioOS Admin Payments</title>
+<title>StudioOS Admin Earnings</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,7 +20,7 @@
     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
       <div>
         <div class="text-xs uppercase tracking-[0.22em] text-indigo-200 font-bold">StudioOS</div>
-        <h1 class="text-xl sm:text-2xl font-extrabold">Payments Management</h1>
+        <h1 class="text-xl sm:text-2xl font-extrabold">Earnings & Payouts</h1>
       </div>
 
       <div class="flex items-center gap-3">
@@ -53,11 +53,11 @@
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-[0.16em] uppercase admin-pill">
-            Payments
+            Earnings
           </div>
-          <h2 class="mt-4 text-2xl font-extrabold">Payment control center</h2>
+          <h2 class="mt-4 text-2xl font-extrabold">Photographer earnings control center</h2>
           <p class="mt-2 text-sm text-slate-300">
-            Monitor template purchases, photo purchases, revenue split, gateway fees, and platform earnings.
+            Track photographer earnings, platform share, available balances, and payout requests.
           </p>
         </div>
 
@@ -75,55 +75,87 @@
 
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="admin-card">
-        <div class="admin-card-label">Total Payments</div>
-        <div id="paymentsTotalCard" class="admin-card-value">—</div>
-      </div>
-
-      <div class="admin-card">
-        <div class="admin-card-label">Gross Revenue</div>
+        <div class="admin-card-label">Gross Photo Sales</div>
         <div id="paymentsGrossCard" class="admin-card-value">—</div>
       </div>
 
       <div class="admin-card">
-        <div class="admin-card-label">Photographer Share</div>
+        <div class="admin-card-label">Photographer Earnings</div>
         <div id="paymentsPhotographerCard" class="admin-card-value">—</div>
       </div>
 
       <div class="admin-card">
-        <div class="admin-card-label">Platform Share</div>
+        <div class="admin-card-label">Platform Earnings</div>
         <div id="paymentsPlatformCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Pending Payouts</div>
+        <div id="paymentsPendingPayoutCard" class="admin-card-value">—</div>
       </div>
     </section>
 
     <section class="admin-panel">
       <div class="admin-panel-header">
         <div>
-          <h3 class="admin-panel-title">Payment Records</h3>
-          <p class="admin-panel-subtitle">Search by user, buyer, payment id, Razorpay id, or payment type</p>
+          <h3 class="admin-panel-title">Photographer Earnings</h3>
+          <p class="admin-panel-subtitle">Photographer-wise earnings, platform share, and available balance</p>
         </div>
       </div>
 
       <div class="pt-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
         <input
-          id="paymentSearchInput"
+          id="earningSearchInput"
           type="search"
-          placeholder="Search payments..."
+          placeholder="Search photographer..."
           class="w-full rounded-2xl bg-slate-950/70 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
         >
 
         <select
-          id="paymentTypeFilter"
+          id="earningFilter"
           class="rounded-2xl bg-slate-950/70 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
         >
-          <option value="all">All Types</option>
-          <option value="template_purchase">Template Purchases</option>
-          <option value="photo_purchase">Photo Purchases</option>
-          <option value="photo_transaction">Photo Transactions</option>
+          <option value="all">All Photographers</option>
+          <option value="has_earnings">Has Earnings</option>
+          <option value="has_balance">Available Balance</option>
+          <option value="pending_payout">Pending Payout</option>
         </select>
       </div>
 
-      <div id="paymentsList" class="admin-list mt-4">
-        <div class="admin-muted">Loading payments...</div>
+      <div id="earningsList" class="admin-list mt-4">
+        <div class="admin-muted">Loading earnings...</div>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel-header">
+        <div>
+          <h3 class="admin-panel-title">Payout Requests</h3>
+          <p class="admin-panel-subtitle">Approve or reject photographer withdrawal requests after manual UPI/bank verification</p>
+        </div>
+      </div>
+
+      <div class="pt-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+        <input
+          id="payoutSearchInput"
+          type="search"
+          placeholder="Search payout requests..."
+          class="w-full rounded-2xl bg-slate-950/70 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+        >
+
+        <select
+          id="payoutStatusFilter"
+          class="rounded-2xl bg-slate-950/70 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+        >
+          <option value="all">All Requests</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+
+      <div id="payoutRequestsList" class="admin-list mt-4">
+        <div class="admin-muted">Loading payout requests...</div>
       </div>
     </section>
 
@@ -133,7 +165,7 @@
 <script src="js/admin-config.js?v=20260510-admin-session-v2"></script>
 <script src="js/admin-auth.js?v=20260510-admin-session-v2"></script>
 <script src="js/admin-layout.js?v=20260510-admin-session-v2"></script>
-<script src="js/admin-payments.js?v=20260510-admin-payments-v1"></script>
+<script src="js/admin-payments.js?v=20260510-admin-earnings-v2"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
@@ -153,10 +185,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
   } catch (err) {
-    console.error("Admin payments page boot failed:", err);
+    console.error("Admin earnings page boot failed:", err);
     const errorBox = document.getElementById("paymentsError");
     if (errorBox) {
-      errorBox.textContent = err?.message || "Failed to load payments page.";
+      errorBox.textContent = err?.message || "Failed to load earnings page.";
       errorBox.classList.remove("hidden");
     }
   }
