@@ -8,6 +8,9 @@
 
   let revenueRows = [];
   let revenueSummary = null;
+  let recentVisibleCount = 5;
+
+  const RECENT_REVENUE_PAGE_SIZE = 5;
 
   function setText(id, value) {
     const el = document.getElementById(id);
@@ -306,13 +309,6 @@
 
     return `
       <div style="margin-bottom:1rem;">
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:0.75rem;">
-          <div>
-            <div class="admin-panel-title">Revenue Breakdown</div>
-            <div class="admin-panel-subtitle">Grouped summary only. Photographer earnings are excluded.</div>
-          </div>
-        </div>
-
         <div style="display:grid;grid-template-columns:minmax(0, 1fr) 140px 120px;gap:0.8rem;align-items:center;padding:0 0.95rem 0.5rem;color:#cbd5e1;font-size:0.72rem;line-height:1rem;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;">
           <div>Source</div>
           <div style="text-align:right;">Amount</div>
@@ -328,11 +324,13 @@
   }
 
   function renderRecentRevenueActivity(rows) {
-    const recentRows = Array.isArray(rows) ? rows.slice(0, 8) : [];
+    const filteredRows = Array.isArray(rows) ? rows : [];
+    const recentRows = filteredRows.slice(0, recentVisibleCount);
+    const hasMoreRows = filteredRows.length > recentVisibleCount;
 
     if (recentRows.length === 0) {
       return `
-        <div style="margin-top:1.25rem;">
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.08);">
           <div class="admin-panel-title">Recent Revenue Activity</div>
           <div class="admin-muted" style="margin-top:0.75rem;">No recent StudioOS revenue records found.</div>
         </div>
@@ -370,16 +368,35 @@
       `;
     }).join("");
 
+    const loadMoreButton = hasMoreRows
+      ? `
+        <div style="display:flex;justify-content:center;margin-top:0.9rem;">
+          <button
+            id="loadMoreRevenueBtn"
+            type="button"
+            style="border-radius:0.9rem;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.07);padding:0.7rem 1rem;color:#ffffff;font-size:0.85rem;font-weight:900;cursor:pointer;"
+          >
+            Load More
+          </button>
+        </div>
+      `
+      : `
+        <div style="margin-top:0.75rem;text-align:center;color:#94a3b8;font-size:0.78rem;font-weight:700;">
+          All visible revenue records loaded
+        </div>
+      `;
+
     return `
       <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.08);">
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:0.75rem;">
           <div>
             <div class="admin-panel-title">Recent Revenue Activity</div>
-            <div class="admin-panel-subtitle">Latest 8 records only, to keep this page clean.</div>
+            <div class="admin-panel-subtitle">Showing ${escapeHtml(String(recentRows.length))} of ${escapeHtml(String(filteredRows.length))} records. Load more shows the next 5.</div>
           </div>
         </div>
         ${headerRow}
         ${rowsHtml}
+        ${loadMoreButton}
       </div>
     `;
   }
@@ -403,6 +420,14 @@
     list.querySelectorAll("[data-admin-revenue-id]").forEach((card) => {
       card.addEventListener("click", () => openRevenueDetailsModal(card.getAttribute("data-admin-revenue-id")));
     });
+
+    const loadMoreBtn = document.getElementById("loadMoreRevenueBtn");
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener("click", () => {
+        recentVisibleCount += RECENT_REVENUE_PAGE_SIZE;
+        render();
+      });
+    }
   }
 
   function render() {
@@ -415,6 +440,7 @@
 
     const supabase = await getSupabaseClient();
     await fetchRevenue(supabase);
+    recentVisibleCount = RECENT_REVENUE_PAGE_SIZE;
 
     render();
   }
@@ -443,12 +469,18 @@
 
     if (searchInput && searchInput.dataset.bound !== "true") {
       searchInput.dataset.bound = "true";
-      searchInput.addEventListener("input", render);
+      searchInput.addEventListener("input", () => {
+        recentVisibleCount = RECENT_REVENUE_PAGE_SIZE;
+        render();
+      });
     }
 
     if (typeFilter && typeFilter.dataset.bound !== "true") {
       typeFilter.dataset.bound = "true";
-      typeFilter.addEventListener("change", render);
+      typeFilter.addEventListener("change", () => {
+        recentVisibleCount = RECENT_REVENUE_PAGE_SIZE;
+        render();
+      });
     }
 
     document.addEventListener("keydown", (event) => {
