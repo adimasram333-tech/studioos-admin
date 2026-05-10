@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>StudioOS Admin Revenue</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body class="min-h-screen text-white admin-bg">
+
+<div id="adminApp" class="min-h-screen">
+
+  <header class="sticky top-0 z-40 border-b border-white/10 bg-slate-950/75 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <div>
+        <div class="text-xs uppercase tracking-[0.22em] text-indigo-200 font-bold">StudioOS</div>
+        <h1 class="text-xl sm:text-2xl font-extrabold">Revenue Management</h1>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a
+          href="admin-dashboard.html"
+          class="rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-2 text-sm font-bold transition"
+        >
+          Dashboard
+        </a>
+
+        <div class="hidden sm:block text-right">
+          <div id="adminEmailLabel" class="text-sm font-semibold text-white">Checking...</div>
+          <div id="adminRoleLabel" class="text-xs text-slate-400">Admin</div>
+        </div>
+
+        <button
+          id="adminLogoutBtn"
+          type="button"
+          class="rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-2 text-sm font-bold transition"
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+    <section class="admin-glass rounded-3xl p-5 sm:p-6">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-[0.16em] uppercase admin-pill">
+            Revenue
+          </div>
+          <h2 class="mt-4 text-2xl font-extrabold">StudioOS company revenue</h2>
+          <p class="mt-2 text-sm text-slate-300">
+            Company-only revenue: photo commission, template revenue, and paid subscription revenue.
+          </p>
+        </div>
+
+        <button
+          id="refreshRevenueBtn"
+          type="button"
+          class="rounded-2xl bg-indigo-600 hover:bg-indigo-700 px-5 py-3 text-sm font-bold transition"
+        >
+          Refresh
+        </button>
+      </div>
+    </section>
+
+    <section id="revenueError" class="hidden rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200"></section>
+
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="admin-card">
+        <div class="admin-card-label">Total StudioOS Revenue</div>
+        <div id="totalStudioOSRevenueCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Photo Commission</div>
+        <div id="photoCommissionRevenueCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Template Revenue</div>
+        <div id="templateRevenueCard" class="admin-card-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-label">Subscription Revenue</div>
+        <div id="subscriptionRevenueCard" class="admin-card-value">—</div>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel-header">
+        <div>
+          <h3 class="admin-panel-title">Revenue Records</h3>
+          <p class="admin-panel-subtitle">StudioOS revenue only. Photographer earnings are excluded.</p>
+        </div>
+      </div>
+
+      <div class="pt-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+        <input
+          id="revenueSearchInput"
+          type="search"
+          placeholder="Search revenue..."
+          class="w-full rounded-2xl bg-slate-950/70 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+        >
+
+        <select
+          id="revenueTypeFilter"
+          class="rounded-2xl bg-slate-950/70 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+        >
+          <option value="all">All Revenue</option>
+          <option value="photo_commission">Photo Commission</option>
+          <option value="template_revenue">Template Revenue</option>
+          <option value="subscription_revenue">Subscription Revenue</option>
+        </select>
+      </div>
+
+      <div id="revenueList" class="admin-list mt-4">
+        <div class="admin-muted">Loading revenue...</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="js/admin-config.js?v=20260510-admin-session-v2"></script>
+<script src="js/admin-auth.js?v=20260510-admin-session-v2"></script>
+<script src="js/admin-layout.js?v=20260510-admin-session-v2"></script>
+<script src="js/admin-revenue.js?v=20260510-revenue-v1"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    if (!window.AdminAuth || typeof window.AdminAuth.requireAdminPage !== "function") {
+      throw new Error("Admin auth module is not loaded.");
+    }
+
+    const authResult = await window.AdminAuth.requireAdminPage("admin-login.html");
+
+    if (window.AdminLayout && typeof window.AdminLayout.renderAdminProfile === "function") {
+      window.AdminLayout.renderAdminProfile(authResult?.profile || null);
+    }
+
+    if (window.AdminRevenue && typeof window.AdminRevenue.init === "function") {
+      await window.AdminRevenue.init();
+    }
+
+  } catch (err) {
+    console.error("Admin revenue page boot failed:", err);
+    const errorBox = document.getElementById("revenueError");
+    if (errorBox) {
+      errorBox.textContent = err?.message || "Failed to load revenue page.";
+      errorBox.classList.remove("hidden");
+    }
+  }
+});
+</script>
+
+</body>
+</html>
