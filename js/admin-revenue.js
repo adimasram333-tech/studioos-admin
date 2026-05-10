@@ -274,17 +274,73 @@
     if (closeBtn) closeBtn.onclick = closeRevenueModal;
   }
 
-  function renderRevenueList(rows) {
-    const list = document.getElementById("revenueList");
-    if (!list) return;
+  function getRevenueTypeCount(type) {
+    return revenueRows.filter((row) => String(row?.revenue_type || "").trim() === type).length;
+  }
 
-    if (!Array.isArray(rows) || rows.length === 0) {
-      list.innerHTML = `<div class="admin-muted">No StudioOS revenue records found.</div>`;
-      return;
+  function createBreakdownRow(label, amount, recordsCount, badgeClass) {
+    return `
+      <div class="admin-list-item" style="display:grid;grid-template-columns:minmax(0, 1fr) 140px 120px;gap:0.8rem;align-items:center;">
+        <div style="min-width:0;">
+          <div class="admin-list-title">${escapeHtml(label)}</div>
+          <div class="admin-list-subtitle">StudioOS company revenue source</div>
+        </div>
+        <div style="text-align:right;font-weight:900;color:#ffffff;white-space:nowrap;">${escapeHtml(formatCurrency(amount))}</div>
+        <div style="text-align:center;">
+          <span class="${badgeClass}">${escapeHtml(String(recordsCount || 0))} records</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderRevenueBreakdown() {
+    const total = Number(revenueSummary?.total_studioos_revenue || 0);
+    const photoCommission = Number(revenueSummary?.photo_commission_revenue || 0);
+    const templateRevenue = Number(revenueSummary?.template_revenue || 0);
+    const subscriptionRevenue = Number(revenueSummary?.subscription_revenue || 0);
+
+    const totalRecords = Number(revenueSummary?.revenue_records_count || revenueRows.length || 0);
+    const photoRecords = getRevenueTypeCount("photo_commission");
+    const templateRecords = getRevenueTypeCount("template_revenue");
+    const subscriptionRecords = getRevenueTypeCount("subscription_revenue");
+
+    return `
+      <div style="margin-bottom:1rem;">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:0.75rem;">
+          <div>
+            <div class="admin-panel-title">Revenue Breakdown</div>
+            <div class="admin-panel-subtitle">Grouped summary only. Photographer earnings are excluded.</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0, 1fr) 140px 120px;gap:0.8rem;align-items:center;padding:0 0.95rem 0.5rem;color:#cbd5e1;font-size:0.72rem;line-height:1rem;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;">
+          <div>Source</div>
+          <div style="text-align:right;">Amount</div>
+          <div style="text-align:center;">Records</div>
+        </div>
+
+        ${createBreakdownRow("Total StudioOS Revenue", total, totalRecords, "admin-badge admin-badge-success")}
+        ${createBreakdownRow("Photo Commission", photoCommission, photoRecords, "admin-badge admin-badge-warning")}
+        ${createBreakdownRow("Template Revenue", templateRevenue, templateRecords, "admin-badge admin-badge-success")}
+        ${createBreakdownRow("Subscription Revenue", subscriptionRevenue, subscriptionRecords, "admin-badge admin-badge-muted")}
+      </div>
+    `;
+  }
+
+  function renderRecentRevenueActivity(rows) {
+    const recentRows = Array.isArray(rows) ? rows.slice(0, 8) : [];
+
+    if (recentRows.length === 0) {
+      return `
+        <div style="margin-top:1.25rem;">
+          <div class="admin-panel-title">Recent Revenue Activity</div>
+          <div class="admin-muted" style="margin-top:0.75rem;">No recent StudioOS revenue records found.</div>
+        </div>
+      `;
     }
 
     const headerRow = `
-      <div style="display:grid;grid-template-columns:minmax(0, 1fr) 148px 136px 126px;gap:0.8rem;align-items:center;padding:0 0.95rem 0.5rem;color:#cbd5e1;font-size:0.72rem;line-height:1rem;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;">
+      <div style="display:grid;grid-template-columns:minmax(0, 1fr) 132px 118px 112px;gap:0.8rem;align-items:center;padding:0 0.95rem 0.5rem;color:#cbd5e1;font-size:0.72rem;line-height:1rem;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;">
         <div>Revenue</div>
         <div style="text-align:center;">Type</div>
         <div style="text-align:right;">Amount</div>
@@ -292,11 +348,15 @@
       </div>
     `;
 
-    const rowsHtml = rows.map((row) => {
+    const rowsHtml = recentRows.map((row) => {
       const revenueId = String(row?.revenue_id || "");
+      const date = row?.created_at ? new Date(row.created_at) : null;
+      const shortDate = date && !Number.isNaN(date.getTime())
+        ? date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+        : "—";
 
       return `
-        <div class="admin-list-item" data-admin-revenue-id="${escapeHtml(revenueId)}" style="cursor:pointer;display:grid;grid-template-columns:minmax(0, 1fr) 148px 136px 126px;gap:0.8rem;align-items:center;">
+        <div class="admin-list-item" data-admin-revenue-id="${escapeHtml(revenueId)}" style="cursor:pointer;display:grid;grid-template-columns:minmax(0, 1fr) 132px 118px 112px;gap:0.8rem;align-items:center;">
           <div style="min-width:0;">
             <button type="button" class="admin-list-title" style="background:transparent;border:0;padding:0;max-width:100%;color:#ffffff;font:inherit;font-weight:800;text-align:left;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(getDisplayName(row))}</button>
             <div class="admin-list-subtitle" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(getDisplaySubtitle(row))}</div>
@@ -305,12 +365,40 @@
             <span class="${getRevenueBadgeClass(row)}">${escapeHtml(getRevenueTypeLabel(row))}</span>
           </div>
           <div style="text-align:right;font-weight:900;color:#ffffff;white-space:nowrap;">${escapeHtml(formatCurrency(row?.amount))}</div>
-          <div style="text-align:right;font-weight:800;color:#cbd5e1;white-space:nowrap;">${escapeHtml(formatDate(row?.created_at))}</div>
+          <div style="text-align:right;font-weight:800;color:#cbd5e1;white-space:nowrap;">${escapeHtml(shortDate)}</div>
         </div>
       `;
     }).join("");
 
-    list.innerHTML = headerRow + rowsHtml;
+    return `
+      <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.08);">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:0.75rem;">
+          <div>
+            <div class="admin-panel-title">Recent Revenue Activity</div>
+            <div class="admin-panel-subtitle">Latest 8 records only, to keep this page clean.</div>
+          </div>
+        </div>
+        ${headerRow}
+        ${rowsHtml}
+      </div>
+    `;
+  }
+
+  function renderRevenueList(rows) {
+    const list = document.getElementById("revenueList");
+    if (!list) return;
+
+    const filteredRows = Array.isArray(rows) ? rows : [];
+
+    if (!Array.isArray(revenueRows) || revenueRows.length === 0) {
+      list.innerHTML = `
+        ${renderRevenueBreakdown()}
+        <div class="admin-muted">No StudioOS revenue records found.</div>
+      `;
+      return;
+    }
+
+    list.innerHTML = renderRevenueBreakdown() + renderRecentRevenueActivity(filteredRows);
 
     list.querySelectorAll("[data-admin-revenue-id]").forEach((card) => {
       card.addEventListener("click", () => openRevenueDetailsModal(card.getAttribute("data-admin-revenue-id")));
