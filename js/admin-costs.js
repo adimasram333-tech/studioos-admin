@@ -32,8 +32,20 @@
     list.innerHTML = [
       metricRow("Storage Cost", formatCurrency(costOverview.estimated_storage_cost), `${formatBytes(costOverview.total_storage_bytes)} stored · Rate ${formatCurrency(costOverview.storage_rate)} / GB-month`, "Estimated"),
       metricRow("AI / Face Recognition Cost", formatCurrency(costOverview.estimated_ai_cost), `${formatNumber(costOverview.total_ai_processed)} AI processed · Rate ${formatCurrency(costOverview.ai_rate)} / 1000 images`, "Estimated"),
-      metricRow("CDN / Download Cost", formatCurrency(costOverview.estimated_cdn_cost), `${formatBytes(costOverview.total_download_bytes)} delivery tracked · Download bytes source not fully wired yet`, "Estimated"),
-      metricRow("Gateway Fees", formatCurrency(costOverview.estimated_gateway_fees), `Photo actual: ${formatCurrency(costOverview.actual_photo_gateway_fees)} · Other estimated: ${formatCurrency(costOverview.estimated_other_gateway_fees)}`, "Mixed", "admin-badge admin-badge-warning")
+      metricRow(
+        "CDN / Download Cost",
+        formatCurrency(costOverview.estimated_cdn_cost),
+        `${formatBytes(costOverview.total_download_bytes)} delivery tracked · Rate ${formatCurrency(costOverview.cdn_rate)} / GB`,
+        Number(costOverview.total_download_bytes || 0) > 0 ? "Tracked" : "Ready",
+        Number(costOverview.total_download_bytes || 0) > 0 ? "admin-badge admin-badge-success" : "admin-badge admin-badge-muted"
+      ),
+      metricRow(
+        "Gateway Fees",
+        formatCurrency(costOverview.estimated_gateway_fees),
+        `Photo actual: ${formatCurrency(costOverview.actual_photo_gateway_fees)} · Subscription actual: ${formatCurrency(costOverview.actual_subscription_gateway_fees)} · Template actual: ${formatCurrency(costOverview.actual_template_gateway_fees)} · Missing estimated: ${formatCurrency(costOverview.estimated_missing_gateway_fees)}`,
+        Number(costOverview.estimated_missing_gateway_fees || 0) > 0 ? "Mixed" : "Actual",
+        Number(costOverview.estimated_missing_gateway_fees || 0) > 0 ? "admin-badge admin-badge-warning" : "admin-badge admin-badge-success"
+      )
     ].join("");
   }
   function renderUsageSnapshot() {
@@ -43,7 +55,9 @@
       metricRow("Estimated Profit", formatCurrency(costOverview.estimated_profit), `Revenue ${formatCurrency(costOverview.total_studioos_revenue)} - Cost ${formatCurrency(costOverview.estimated_total_cost)}`, profit>=0?"Profit":"Loss", profit>=0?"admin-badge admin-badge-success":"admin-badge admin-badge-warning"),
       metricRow("Profit Margin", `${formatDecimal(costOverview.profit_margin_percent)}%`, "Estimated business margin from current tracked data", "Estimated"),
       metricRow("Open Alerts", formatNumber(costOverview.open_alerts_count), `Critical ${formatNumber(costOverview.critical_alerts_count)} · Warning ${formatNumber(costOverview.warning_alerts_count)}`, "Monitor", Number(costOverview.open_alerts_count||0)>0?"admin-badge admin-badge-warning":"admin-badge admin-badge-success"),
-      metricRow("Gateway Fee Rate", `${formatDecimal(costOverview.gateway_fee_percent)}%`, `Fixed fee ${formatCurrency(costOverview.gateway_fee_fixed)} per transaction`, "Setting")
+      metricRow("Gateway Fee Rate", `${formatDecimal(costOverview.gateway_fee_percent)}%`, `Fixed fee ${formatCurrency(costOverview.gateway_fee_fixed)} per transaction`, "Setting"),
+      metricRow("Download Usage", formatBytes(costOverview.total_download_bytes), `CDN cost ${formatCurrency(costOverview.estimated_cdn_cost)} · ${formatDecimal(costOverview.total_download_gb, 4)} GB tracked`, "Tracked"),
+      metricRow("Gateway Fee Source", Number(costOverview.estimated_missing_gateway_fees || 0) > 0 ? "Mixed" : "Actual", `Missing estimated ${formatCurrency(costOverview.estimated_missing_gateway_fees)} · Actual subscription ${formatCurrency(costOverview.actual_subscription_gateway_fees)} · Actual template ${formatCurrency(costOverview.actual_template_gateway_fees)}`, Number(costOverview.estimated_missing_gateway_fees || 0) > 0 ? "Review" : "Clean", Number(costOverview.estimated_missing_gateway_fees || 0) > 0 ? "admin-badge admin-badge-warning" : "admin-badge admin-badge-success")
     ].join("");
   }
   function filteredAlerts() {
