@@ -7,6 +7,7 @@
   "use strict";
 
   let allUsers = [];
+  let currentAdminUserId = "";
 
   function setText(id, value) {
     const el = document.getElementById(id);
@@ -141,6 +142,43 @@
     return allUsers.find((user) => String(user?.user_id || "") === safeUserId) || null;
   }
 
+  function isCurrentAdminUser(userId) {
+    return !!currentAdminUserId && String(userId || "").trim() === String(currentAdminUserId || "").trim();
+  }
+
+  function getAdminRpcErrorMessage(err, fallback = "Failed to update user status. Please try again.") {
+    const rawMessage = String(err?.message || err?.details || err?.hint || "").trim();
+
+    if (!rawMessage) return fallback;
+
+    if (rawMessage.toLowerCase().includes("admin cannot block own account")) {
+      return "You cannot block your own admin account.";
+    }
+
+    if (rawMessage.toLowerCase().includes("access denied")) {
+      return "Access denied. Only admin can update user status.";
+    }
+
+    return rawMessage;
+  }
+
+  async function syncCurrentAdminUser(supabase) {
+    try {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error) {
+        console.warn("Admin user identity fetch failed:", error);
+        currentAdminUserId = "";
+        return;
+      }
+
+      currentAdminUserId = String(data?.user?.id || "").trim();
+    } catch (err) {
+      console.warn("Admin user identity fetch error:", err);
+      currentAdminUserId = "";
+    }
+  }
+
   async function fetchUsers(supabase) {
     try {
       const { data, error } = await supabase.rpc("admin_get_users_overview");
@@ -232,6 +270,11 @@
     const user = findUserById(safeUserId);
     if (!user) return;
 
+    if (isCurrentAdminUser(safeUserId)) {
+      alert("You cannot block your own admin account.");
+      return;
+    }
+
     const actionText = nextBlocked ? "block" : "unblock";
     const confirmed = confirm(`Are you sure you want to ${actionText} ${getDisplayName(user)}?`);
     if (!confirmed) return;
@@ -257,7 +300,7 @@
       openUserDetailsModal(safeUserId);
     } catch (err) {
       console.error("Admin user block status update failed:", err);
-      alert("Failed to update user status. Please try again.");
+      alert(getAdminRpcErrorMessage(err));
     }
   }
 
@@ -275,6 +318,7 @@
     const totalPhotoSales = formatCurrency(user?.total_photo_sales || 0);
     const totalTemplatePurchases = formatCurrency(user?.total_template_purchases || 0);
     const isBlocked = user?.is_blocked === true;
+    const isSelfAdmin = isCurrentAdminUser(user?.user_id);
 
     const modal = document.createElement("div");
     modal.id = "adminUserDetailsModal";
@@ -304,7 +348,7 @@
             <span class="${getPlanBadgeClass(user)}">${escapeHtml(plan)}</span>
             <span class="${getStatusBadgeClass(user)}">${escapeHtml(status)}</span>
             <span class="${getBlockBadgeClass(user)}">${escapeHtml(blockLabel)}</span>
-            <button id="adminUserBlockToggleBtn" type="button" style="margin-left:auto;padding:0.55rem 0.8rem;border-radius:0.85rem;border:1px solid ${isBlocked ? "rgba(34,197,94,0.28)" : "rgba(245,158,11,0.28)"};background:${isBlocked ? "rgba(34,197,94,0.12)" : "rgba(245,158,11,0.12)"};color:${isBlocked ? "#bbf7d0" : "#fde68a"};font-size:0.78rem;font-weight:900;cursor:pointer;">${isBlocked ? "Unblock User" : "Block User"}</button>
+            <button id="adminUserBlockToggleBtn" type="button" ${isSelfAdmin ? "disabled" : ""} style="margin-left:auto;padding:0.55rem 0.8rem;border-radius:0.85rem;border:1px solid ${isSelfAdmin ? "rgba(148,163,184,0.24)" : isBlocked ? "rgba(34,197,94,0.28)" : "rgba(245,158,11,0.28)"};background:${isSelfAdmin ? "rgba(148,163,184,0.10)" : isBlocked ? "rgba(34,197,94,0.12)" : "rgba(245,158,11,0.12)"};color:${isSelfAdmin ? "#cbd5e1" : isBlocked ? "#bbf7d0" : "#fde68a"};font-size:0.78rem;font-weight:900;cursor:${isSelfAdmin ? "not-allowed" : "pointer"};opacity:${isSelfAdmin ? "0.75" : "1"};">${isSelfAdmin ? "Owner Account" : isBlocked ? "Unblock User" : "Block User"}</button>
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));gap:0.75rem;">
@@ -338,7 +382,7 @@
     if (closeBtn) closeBtn.onclick = closeUserDetailsModal;
 
     const blockBtn = document.getElementById("adminUserBlockToggleBtn");
-    if (blockBtn) blockBtn.onclick = () => setUserBlockStatus(userId, !isBlocked);
+    if (blockBtn && !isSelfAdmin) blockBtn.onclick = () => setUserBlockStatus(userId, !isBlocked);
   }
 
   function renderUsersList(users) {
@@ -420,6 +464,7 @@
       throw new Error("Admin config module is not loaded.");
     }
     const supabase = await window.AdminConfig.getSupabase();
+    await syncCurrentAdminUser(supabase);
     allUsers = await fetchUsers(supabase);
     render();
   }
