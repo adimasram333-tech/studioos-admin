@@ -339,13 +339,22 @@
   }
 
   async function fetchPendingPayoutsCount(supabase) {
-    /*
-      Payout module is not wired yet. Keeping this function in place preserves the
-      dashboard architecture without probing optional payout tables and creating
-      production console 400 errors.
-    */
-    void supabase;
-    return 0;
+    try {
+      const { count, error } = await supabase
+        .from("payout_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+
+      if (error) {
+        console.error("Pending payouts count failed:", error);
+        return 0;
+      }
+
+      return Number(count || 0);
+    } catch (err) {
+      console.error("Pending payouts count error:", err);
+      return 0;
+    }
   }
 
   async function fetchRecentUsers(supabase) {
