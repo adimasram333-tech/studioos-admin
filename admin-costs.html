@@ -38,6 +38,19 @@
     <section class="admin-panel"><div class="admin-panel-header"><div><h3 class="admin-panel-title">Cost Breakdown</h3><p class="admin-panel-subtitle">Estimated operating costs. Final AWS invoice is not included yet.</p></div></div><div id="costBreakdownList" class="admin-list mt-4"><div class="admin-muted">Loading costs...</div></div></section>
     <section class="admin-panel"><div class="admin-panel-header"><div><h3 class="admin-panel-title">Usage Snapshot</h3><p class="admin-panel-subtitle">Storage, AI usage, gateway fees, and profit margin</p></div></div><div id="usageSnapshotList" class="admin-list mt-4"><div class="admin-muted">Loading usage...</div></div></section>
   </section>
+
+  <section class="admin-panel">
+    <div class="admin-panel-header">
+      <div>
+        <h3 class="admin-panel-title">Cost Settings</h3>
+        <p class="admin-panel-subtitle">Admin-editable rates used for cost estimates and alert thresholds.</p>
+      </div>
+    </div>
+    <div id="costSettingsList" class="admin-list mt-4">
+      <div class="admin-muted">Loading settings...</div>
+    </div>
+  </section>
+
   <section class="admin-panel"><div class="admin-panel-header"><div><h3 class="admin-panel-title">Cost Alerts</h3><p class="admin-panel-subtitle">Open and recent risk alerts from admin_cost_alerts</p></div></div>
     <div class="pt-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3"><input id="costAlertSearchInput" type="search" placeholder="Search alerts..." class="w-full rounded-2xl bg-slate-950/70 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"><select id="costAlertFilter" class="rounded-2xl bg-slate-950/70 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"><option value="open">Open Alerts</option><option value="all">All Alerts</option><option value="critical">Critical</option><option value="warning">Warning</option><option value="resolved">Resolved</option></select></div>
     <div id="costAlertsList" class="admin-list mt-4"><div class="admin-muted">Loading alerts...</div></div>
@@ -47,7 +60,7 @@
 <script src="js/admin-config.js?v=20260510-admin-session-v2"></script>
 <script src="js/admin-auth.js?v=20260510-admin-session-v2"></script>
 <script src="js/admin-layout.js?v=20260510-admin-session-v2"></script>
-<script src="js/admin-costs.js?v=20260511-costs-v1"></script>
+<script src="js/admin-costs.js?v=20260514-cost-settings-v1"></script>
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   try {
