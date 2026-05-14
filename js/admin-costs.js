@@ -73,12 +73,78 @@
       metricRow("Gateway Fee Source", Number(costOverview.estimated_missing_gateway_fees || 0) > 0 ? "Mixed" : "Actual", `Missing estimated ${formatCurrency(costOverview.estimated_missing_gateway_fees)} · Actual subscription ${formatCurrency(costOverview.actual_subscription_gateway_fees)} · Actual template ${formatCurrency(costOverview.actual_template_gateway_fees)}`, Number(costOverview.estimated_missing_gateway_fees || 0) > 0 ? "Review" : "Clean", Number(costOverview.estimated_missing_gateway_fees || 0) > 0 ? "admin-badge admin-badge-warning" : "admin-badge admin-badge-success")
     ].join("");
   }
-  function settingGroupLabel(group) {
-    const value = String(group || "").trim().toLowerCase();
-    if (value === "cost") return "Cost Rates";
-    if (value === "payment") return "Payment Fees";
-    if (value === "alert") return "Alert Thresholds";
-    return "Settings";
+  const SIMPLE_COST_SETTINGS = [
+    {
+      heading: "Main Cost Rates",
+      subtitle: "These rates decide the estimated running cost of StudioOS.",
+      items: [
+        {
+          key: "storage_rate_per_gb_month",
+          title: "Storage Cost",
+          help: "Monthly storage cost for photos on S3.",
+          prefix: "₹",
+          suffix: "/ GB-month"
+        },
+        {
+          key: "cdn_rate_per_gb",
+          title: "Download / CDN Cost",
+          help: "Delivery cost when clients download or view photos.",
+          prefix: "₹",
+          suffix: "/ GB"
+        },
+        {
+          key: "ai_rate_per_1000_images",
+          title: "AI Face Recognition Cost",
+          help: "Estimated AI processing cost for face search.",
+          prefix: "₹",
+          suffix: "/ 1000 images"
+        }
+      ]
+    },
+    {
+      heading: "Payment Fees",
+      subtitle: "These rates help calculate payment gateway cost.",
+      items: [
+        {
+          key: "gateway_fee_percent",
+          title: "Gateway Percentage",
+          help: "Payment gateway percentage fee.",
+          prefix: "",
+          suffix: "%"
+        },
+        {
+          key: "gateway_fee_fixed_inr",
+          title: "Gateway Fixed Fee",
+          help: "Fixed fee per successful transaction.",
+          prefix: "₹",
+          suffix: "/ transaction"
+        }
+      ]
+    },
+    {
+      heading: "Risk Alert Levels",
+      subtitle: "These levels decide when the cost alert system should warn you.",
+      items: [
+        {
+          key: "storage_warning_percent",
+          title: "Warning Level",
+          help: "Show warning when usage reaches this level.",
+          prefix: "",
+          suffix: "%"
+        },
+        {
+          key: "storage_critical_percent",
+          title: "Critical Level",
+          help: "Show critical alert when usage reaches this level.",
+          prefix: "",
+          suffix: "%"
+        }
+      ]
+    }
+  ];
+
+  function findCostSetting(key) {
+    return costSettings.find((setting) => String(setting?.setting_key || "").trim() === key) || null;
   }
 
   function renderCostSettings() {
@@ -90,47 +156,52 @@
       return;
     }
 
-    const groups = costSettings.reduce((acc, setting) => {
-      const group = String(setting?.setting_group || "settings").trim().toLowerCase();
-      if (!acc[group]) acc[group] = [];
-      acc[group].push(setting);
-      return acc;
-    }, {});
+    list.innerHTML = SIMPLE_COST_SETTINGS.map((section) => {
+      const rows = section.items.map((item) => {
+        const setting = findCostSetting(item.key);
+        if (!setting) return "";
 
-    list.innerHTML = Object.entries(groups).map(([group, settings]) => {
-      const rows = settings.map((setting) => {
-        const key = String(setting?.setting_key || "").trim();
-        const label = safeText(setting?.setting_label, key);
-        const unit = safeText(setting?.setting_unit, "");
-        const description = safeText(setting?.description, "Used for StudioOS cost estimation.");
         const value = Number(setting?.setting_value || 0);
 
         return `
-          <div class="admin-list-item" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,180px) auto;gap:.8rem;align-items:center;">
+          <div class="admin-list-item" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,160px) auto;gap:.8rem;align-items:center;">
             <div style="min-width:0;">
-              <div class="admin-list-title">${escapeHtml(label)}</div>
-              <div class="admin-list-subtitle">${escapeHtml(description)}${unit ? ` · ${escapeHtml(unit)}` : ""}</div>
+              <div class="admin-list-title">${escapeHtml(item.title)}</div>
+              <div class="admin-list-subtitle">${escapeHtml(item.help)} · ${escapeHtml(item.prefix)}${escapeHtml(String(value))}${escapeHtml(item.suffix)}</div>
             </div>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value="${escapeHtml(value)}"
-              data-cost-setting-input="${escapeHtml(key)}"
-              style="width:100%;border-radius:.85rem;background:rgba(2,6,23,.72);border:1px solid rgba(255,255,255,.10);color:#fff;padding:.65rem .75rem;font-size:.85rem;font-weight:800;outline:none;"
-            />
+
+            <div style="display:flex;align-items:center;gap:.45rem;background:rgba(2,6,23,.72);border:1px solid rgba(255,255,255,.10);border-radius:.85rem;padding:0 .65rem;">
+              ${item.prefix ? `<span style="color:#94a3b8;font-size:.78rem;font-weight:900;">${escapeHtml(item.prefix)}</span>` : ""}
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value="${escapeHtml(value)}"
+                data-cost-setting-input="${escapeHtml(item.key)}"
+                style="width:100%;background:transparent;border:0;color:#fff;padding:.65rem 0;font-size:.85rem;font-weight:900;outline:none;"
+              />
+              ${item.suffix ? `<span style="color:#94a3b8;font-size:.72rem;font-weight:800;white-space:nowrap;">${escapeHtml(item.suffix)}</span>` : ""}
+            </div>
+
             <button
               type="button"
-              data-save-cost-setting="${escapeHtml(key)}"
+              data-save-cost-setting="${escapeHtml(item.key)}"
               style="border-radius:.85rem;border:1px solid rgba(14,165,233,.28);background:rgba(14,165,233,.14);padding:.65rem .85rem;color:#bae6fd;font-size:.78rem;font-weight:900;cursor:pointer;white-space:nowrap;"
             >Save</button>
           </div>
         `;
-      }).join("");
+      }).filter(Boolean).join("");
+
+      if (!rows) return "";
 
       return `
         <div style="margin-bottom:1rem;">
-          <div style="margin:0 0 .65rem .2rem;color:#cbd5e1;font-size:.72rem;line-height:1rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;">${escapeHtml(settingGroupLabel(group))}</div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin:0 0 .7rem .2rem;">
+            <div>
+              <div style="color:#fff;font-size:.88rem;line-height:1.15rem;font-weight:900;">${escapeHtml(section.heading)}</div>
+              <div style="margin-top:.18rem;color:#94a3b8;font-size:.76rem;line-height:1.1rem;">${escapeHtml(section.subtitle)}</div>
+            </div>
+          </div>
           <div class="admin-list">${rows}</div>
         </div>
       `;
@@ -169,6 +240,7 @@
       showError(err?.message || "Failed to save cost setting.");
     }
   }
+
 
   function filteredAlerts() {
     const search=String(document.getElementById("costAlertSearchInput")?.value||"").toLowerCase().trim();
