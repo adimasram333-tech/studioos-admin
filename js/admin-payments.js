@@ -8,6 +8,7 @@
 
   let allEarnings = [];
   let allPayoutRequests = [];
+  let earningsVisibleLimit = 6;
 
   function setText(id, value) {
     const el = document.getElementById(id);
@@ -209,6 +210,10 @@
 
       return matchesSearch && matchesFilter;
     });
+  }
+
+  function resetEarningsVisibleLimit() {
+    earningsVisibleLimit = 6;
   }
 
   function getFilteredPayoutRequests() {
@@ -431,7 +436,9 @@
       </div>
     `;
 
-    const rowsHtml = rows.map((row) => {
+    const visibleRows = rows.slice(0, earningsVisibleLimit);
+
+    const rowsHtml = visibleRows.map((row) => {
       const photographerId = String(row?.photographer_id || "");
 
       return `
@@ -448,11 +455,32 @@
       `;
     }).join("");
 
-    list.innerHTML = headerRow + rowsHtml;
+    const remainingCount = Math.max(rows.length - visibleRows.length, 0);
+    const loadMoreHtml = remainingCount > 0
+      ? `
+        <div style="display:flex;align-items:center;justify-content:center;padding-top:0.85rem;">
+          <button id="loadMoreEarningsBtn" type="button" style="padding:0.62rem 1rem;border-radius:0.85rem;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.07);color:#ffffff;font-size:0.78rem;font-weight:900;cursor:pointer;">
+            Load More (${remainingCount})
+          </button>
+        </div>
+      `
+      : rows.length > 6
+        ? `<div class="admin-muted" style="padding-top:0.75rem;text-align:center;">Showing all ${formatNumber(rows.length)} photographers</div>`
+        : "";
+
+    list.innerHTML = headerRow + rowsHtml + loadMoreHtml;
 
     list.querySelectorAll("[data-admin-earning-id]").forEach((card) => {
       card.addEventListener("click", () => openEarningDetailsModal(card.getAttribute("data-admin-earning-id")));
     });
+
+    const loadMoreBtn = document.getElementById("loadMoreEarningsBtn");
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener("click", () => {
+        earningsVisibleLimit += 6;
+        renderEarningsList(rows);
+      });
+    }
   }
 
   function renderPayoutRequestsList(rows) {
@@ -544,6 +572,7 @@
 
     allEarnings = earnings;
     allPayoutRequests = payoutRequests;
+    resetEarningsVisibleLimit();
 
     render();
   }
@@ -574,12 +603,18 @@
 
     if (earningSearchInput && earningSearchInput.dataset.bound !== "true") {
       earningSearchInput.dataset.bound = "true";
-      earningSearchInput.addEventListener("input", render);
+      earningSearchInput.addEventListener("input", () => {
+        resetEarningsVisibleLimit();
+        render();
+      });
     }
 
     if (earningFilter && earningFilter.dataset.bound !== "true") {
       earningFilter.dataset.bound = "true";
-      earningFilter.addEventListener("change", render);
+      earningFilter.addEventListener("change", () => {
+        resetEarningsVisibleLimit();
+        render();
+      });
     }
 
     if (payoutSearchInput && payoutSearchInput.dataset.bound !== "true") {
