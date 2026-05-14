@@ -73,13 +73,63 @@
     list.querySelectorAll("[data-resolve-cost-alert]").forEach(b=>b.addEventListener("click",()=>resolveCostAlert(b.getAttribute("data-resolve-cost-alert"))));
   }
   async function resolveCostAlert(alertId) { const safe=String(alertId||"").trim(); if(!safe) return; try{ const supabase=await getSupabaseClient(); const {error}=await supabase.rpc("admin_resolve_cost_alert", {target_alert_id:safe}); if(error) throw error; await loadCosts(); }catch(err){ console.error("Resolve cost alert failed:",err); showError(err?.message||"Failed to resolve alert."); } }
-  async function generateCostAlerts() { const supabase=await getSupabaseClient(); const {error}=await supabase.rpc("admin_generate_cost_alerts"); if(error) throw error; await loadCosts(); }
+  function showCostsActionMessage(message, type = "info") {
+    const box = document.getElementById("costsError");
+    if (!box) return;
+
+    box.textContent = message || "";
+    box.classList.remove("hidden");
+
+    if (type === "success") {
+      box.style.borderColor = "rgba(34,197,94,0.28)";
+      box.style.background = "rgba(34,197,94,0.10)";
+      box.style.color = "#bbf7d0";
+    } else {
+      box.style.borderColor = "";
+      box.style.background = "";
+      box.style.color = "";
+    }
+
+    if (message) {
+      window.clearTimeout(window.__studioosCostMessageTimer);
+      window.__studioosCostMessageTimer = window.setTimeout(() => {
+        if (box.textContent === message) {
+          hideError();
+          box.style.borderColor = "";
+          box.style.background = "";
+          box.style.color = "";
+        }
+      }, 3500);
+    }
+  }
+
+  async function generateCostAlerts() {
+    const beforeOpenCount = Number(costOverview?.open_alerts_count || 0);
+    const supabase=await getSupabaseClient();
+    const {error}=await supabase.rpc("admin_generate_cost_alerts");
+    if(error) throw error;
+    await loadCosts();
+
+    const afterOpenCount = Number(costOverview?.open_alerts_count || 0);
+    const createdCount = Math.max(0, afterOpenCount - beforeOpenCount);
+
+    if (afterOpenCount > 0) {
+      showCostsActionMessage(
+        createdCount > 0
+          ? `${createdCount} new cost alert${createdCount === 1 ? "" : "s"} generated.`
+          : `${afterOpenCount} open cost alert${afterOpenCount === 1 ? "" : "s"} found.`,
+        "success"
+      );
+    } else {
+      showCostsActionMessage("Cost check completed. No risk alerts found.", "success");
+    }
+  }
   function render(){ renderSummary(); renderCostBreakdown(); renderUsageSnapshot(); renderAlerts(); }
   async function loadCosts(){ hideError(); const supabase=await getSupabaseClient(); await fetchCosts(supabase); render(); }
   function bindEvents(){
     const refreshBtn=document.getElementById("refreshCostsBtn"), generateBtn=document.getElementById("generateCostAlertsBtn"), search=document.getElementById("costAlertSearchInput"), filter=document.getElementById("costAlertFilter");
     if(refreshBtn&&refreshBtn.dataset.bound!=="true"){ refreshBtn.dataset.bound="true"; refreshBtn.addEventListener("click",async()=>{ try{ refreshBtn.disabled=true; refreshBtn.textContent="Refreshing..."; await loadCosts(); }catch(e){ showError(e?.message||"Failed to refresh costs."); }finally{ refreshBtn.disabled=false; refreshBtn.textContent="Refresh"; } }); }
-    if(generateBtn&&generateBtn.dataset.bound!=="true"){ generateBtn.dataset.bound="true"; generateBtn.addEventListener("click",async()=>{ try{ generateBtn.disabled=true; generateBtn.textContent="Checking..."; await generateCostAlerts(); }catch(e){ showError(e?.message||"Failed to generate alerts."); }finally{ generateBtn.disabled=false; generateBtn.textContent="Generate Alerts"; } }); }
+    if(generateBtn&&generateBtn.dataset.bound!=="true"){ generateBtn.dataset.bound="true"; generateBtn.addEventListener("click",async()=>{ try{ generateBtn.disabled=true; generateBtn.textContent="Checking..."; await generateCostAlerts(); generateBtn.textContent="Checked"; window.setTimeout(()=>{ generateBtn.textContent="Generate Alerts"; }, 1200); }catch(e){ showError(e?.message||"Failed to generate alerts."); generateBtn.textContent="Generate Alerts"; }finally{ generateBtn.disabled=false; } }); }
     if(search&&search.dataset.bound!=="true"){ search.dataset.bound="true"; search.addEventListener("input", renderAlerts); }
     if(filter&&filter.dataset.bound!=="true"){ filter.dataset.bound="true"; filter.addEventListener("change", renderAlerts); }
   }
