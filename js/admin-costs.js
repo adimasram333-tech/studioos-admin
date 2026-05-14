@@ -233,8 +233,8 @@
 
       if (error) throw error;
 
-      showCostsActionMessage("Cost setting saved. Estimates refreshed.", "success");
       await loadCosts();
+      showCostsActionMessage("Cost setting saved. Estimates refreshed.", "success");
     } catch (err) {
       console.error("Save cost setting failed:", err);
       showError(err?.message || "Failed to save cost setting.");
