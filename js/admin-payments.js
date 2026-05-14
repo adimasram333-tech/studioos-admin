@@ -357,7 +357,7 @@
         <div style="padding:1.2rem;">
           <div style="padding:0.95rem;border-radius:1rem;background:rgba(255,255,255,0.045);border:1px solid rgba(255,255,255,0.07);font-size:0.85rem;line-height:1.35rem;color:#cbd5e1;">
             <strong style="color:#fff;">Important:</strong>
-            Approve only after manual UPI/bank payout is verified outside StudioOS.
+            Approve only after the manual UPI/bank payout is completed and verified outside StudioOS.
           </div>
 
           <label style="display:block;margin-top:1rem;font-size:0.75rem;font-weight:800;color:#cbd5e1;text-transform:uppercase;letter-spacing:0.08em;">Admin note</label>
@@ -478,12 +478,20 @@
       const status = String(row?.status || "pending").trim().toLowerCase();
       const requestedUpi = safeText(row?.requested_upi || row?.upi);
       const requestedName = safeText(row?.requested_name || row?.owner_name);
-      const actionButtons = status === "pending"
-        ? `
+      let actionButtons = "";
+
+      if (status === "pending") {
+        actionButtons = `
           <button type="button" data-approve-payout="${escapeHtml(requestId)}" style="padding:0.45rem 0.65rem;border-radius:0.75rem;background:rgba(34,197,94,0.14);border:1px solid rgba(34,197,94,0.28);color:#bbf7d0;font-size:0.75rem;font-weight:900;cursor:pointer;">Approve</button>
           <button type="button" data-reject-payout="${escapeHtml(requestId)}" style="padding:0.45rem 0.65rem;border-radius:0.75rem;background:rgba(239,68,68,0.14);border:1px solid rgba(239,68,68,0.28);color:#fecaca;font-size:0.75rem;font-weight:900;cursor:pointer;">Reject</button>
-        `
-        : `<span class="admin-muted">Processed</span>`;
+        `;
+      } else if (status === "approved" || status === "paid" || status === "completed") {
+        actionButtons = `<span style="display:inline-flex;align-items:center;justify-content:center;padding:0.45rem 0.7rem;border-radius:0.75rem;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.24);color:#bbf7d0;font-size:0.75rem;font-weight:900;">Completed</span>`;
+      } else if (status === "rejected") {
+        actionButtons = `<span style="display:inline-flex;align-items:center;justify-content:center;padding:0.45rem 0.7rem;border-radius:0.75rem;background:rgba(148,163,184,0.12);border:1px solid rgba(148,163,184,0.20);color:#cbd5e1;font-size:0.75rem;font-weight:900;">Rejected</span>`;
+      } else {
+        actionButtons = `<span class="admin-muted">Closed</span>`;
+      }
 
       return `
         <div class="admin-list-item" style="display:grid;grid-template-columns:minmax(0, 1fr) auto auto auto;gap:0.65rem;align-items:center;">
