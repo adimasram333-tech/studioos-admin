@@ -6,6 +6,7 @@
   "use strict";
   let costOverview = null;
   let costAlerts = [];
+  let costSettings = [];
   function setText(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
   function showError(message) { const box = document.getElementById("costsError"); if (!box) return; box.textContent = message || "Failed to load costs."; box.classList.remove("hidden"); }
   function hideError() { const box = document.getElementById("costsError"); if (!box) return; box.textContent = ""; box.classList.add("hidden"); }
@@ -18,11 +19,23 @@
   function formatDate(v) { if (!v) return "—"; const d = new Date(v); if (Number.isNaN(d.getTime())) return "—"; return d.toLocaleString("en-IN", {day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}); }
   async function getSupabaseClient() { if (!window.AdminConfig || typeof window.AdminConfig.getSupabase !== "function") throw new Error("Admin config module is not loaded."); return await window.AdminConfig.getSupabase(); }
   async function fetchCosts(supabase) {
-    const [{data: overviewRows, error: overviewError}, {data: alertRows, error: alertsError}] = await Promise.all([supabase.rpc("admin_get_cost_overview"), supabase.rpc("admin_get_cost_alerts")]);
+    const [
+      {data: overviewRows, error: overviewError},
+      {data: alertRows, error: alertsError},
+      {data: settingRows, error: settingsError}
+    ] = await Promise.all([
+      supabase.rpc("admin_get_cost_overview"),
+      supabase.rpc("admin_get_cost_alerts"),
+      supabase.rpc("admin_get_cost_settings")
+    ]);
+
     if (overviewError) { console.error("Admin cost overview fetch failed:", overviewError); throw new Error("Unable to load cost overview."); }
     if (alertsError) { console.error("Admin cost alerts fetch failed:", alertsError); throw new Error("Unable to load cost alerts."); }
+    if (settingsError) { console.error("Admin cost settings fetch failed:", settingsError); throw new Error("Unable to load cost settings."); }
+
     costOverview = Array.isArray(overviewRows) ? overviewRows[0] || null : overviewRows || null;
     costAlerts = Array.isArray(alertRows) ? alertRows : [];
+    costSettings = Array.isArray(settingRows) ? settingRows : [];
   }
   function badge(severity, resolved) { if (resolved) return "admin-badge admin-badge-muted"; const s=String(severity||"").toLowerCase(); return (s==="critical"||s==="warning") ? "admin-badge admin-badge-warning" : "admin-badge admin-badge-muted"; }
   function metricRow(label, value, subtitle, badgeText, badgeClass="admin-badge admin-badge-muted") { return `<div class="admin-list-item" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.85rem;align-items:center;"><div style="min-width:0;"><div class="admin-list-title">${escapeHtml(label)}</div><div class="admin-list-subtitle">${escapeHtml(subtitle)}</div></div><div style="text-align:right;"><div style="font-weight:900;color:#fff;white-space:nowrap;">${escapeHtml(value)}</div>${badgeText?`<div style="margin-top:.35rem;"><span class="${badgeClass}">${escapeHtml(badgeText)}</span></div>`:""}</div></div>`; }
@@ -60,6 +73,103 @@
       metricRow("Gateway Fee Source", Number(costOverview.estimated_missing_gateway_fees || 0) > 0 ? "Mixed" : "Actual", `Missing estimated ${formatCurrency(costOverview.estimated_missing_gateway_fees)} · Actual subscription ${formatCurrency(costOverview.actual_subscription_gateway_fees)} · Actual template ${formatCurrency(costOverview.actual_template_gateway_fees)}`, Number(costOverview.estimated_missing_gateway_fees || 0) > 0 ? "Review" : "Clean", Number(costOverview.estimated_missing_gateway_fees || 0) > 0 ? "admin-badge admin-badge-warning" : "admin-badge admin-badge-success")
     ].join("");
   }
+  function settingGroupLabel(group) {
+    const value = String(group || "").trim().toLowerCase();
+    if (value === "cost") return "Cost Rates";
+    if (value === "payment") return "Payment Fees";
+    if (value === "alert") return "Alert Thresholds";
+    return "Settings";
+  }
+
+  function renderCostSettings() {
+    const list = document.getElementById("costSettingsList");
+    if (!list) return;
+
+    if (!Array.isArray(costSettings) || costSettings.length === 0) {
+      list.innerHTML = '<div class="admin-muted">No cost settings found.</div>';
+      return;
+    }
+
+    const groups = costSettings.reduce((acc, setting) => {
+      const group = String(setting?.setting_group || "settings").trim().toLowerCase();
+      if (!acc[group]) acc[group] = [];
+      acc[group].push(setting);
+      return acc;
+    }, {});
+
+    list.innerHTML = Object.entries(groups).map(([group, settings]) => {
+      const rows = settings.map((setting) => {
+        const key = String(setting?.setting_key || "").trim();
+        const label = safeText(setting?.setting_label, key);
+        const unit = safeText(setting?.setting_unit, "");
+        const description = safeText(setting?.description, "Used for StudioOS cost estimation.");
+        const value = Number(setting?.setting_value || 0);
+
+        return `
+          <div class="admin-list-item" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,180px) auto;gap:.8rem;align-items:center;">
+            <div style="min-width:0;">
+              <div class="admin-list-title">${escapeHtml(label)}</div>
+              <div class="admin-list-subtitle">${escapeHtml(description)}${unit ? ` · ${escapeHtml(unit)}` : ""}</div>
+            </div>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value="${escapeHtml(value)}"
+              data-cost-setting-input="${escapeHtml(key)}"
+              style="width:100%;border-radius:.85rem;background:rgba(2,6,23,.72);border:1px solid rgba(255,255,255,.10);color:#fff;padding:.65rem .75rem;font-size:.85rem;font-weight:800;outline:none;"
+            />
+            <button
+              type="button"
+              data-save-cost-setting="${escapeHtml(key)}"
+              style="border-radius:.85rem;border:1px solid rgba(14,165,233,.28);background:rgba(14,165,233,.14);padding:.65rem .85rem;color:#bae6fd;font-size:.78rem;font-weight:900;cursor:pointer;white-space:nowrap;"
+            >Save</button>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div style="margin-bottom:1rem;">
+          <div style="margin:0 0 .65rem .2rem;color:#cbd5e1;font-size:.72rem;line-height:1rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;">${escapeHtml(settingGroupLabel(group))}</div>
+          <div class="admin-list">${rows}</div>
+        </div>
+      `;
+    }).join("");
+
+    list.querySelectorAll("[data-save-cost-setting]").forEach((button) => {
+      button.addEventListener("click", () => saveCostSetting(button.getAttribute("data-save-cost-setting")));
+    });
+  }
+
+  async function saveCostSetting(settingKey) {
+    const key = String(settingKey || "").trim();
+    if (!key) return;
+
+    const input = document.querySelector(`[data-cost-setting-input="${CSS.escape(key)}"]`);
+    const value = Number(input?.value || 0);
+
+    if (!Number.isFinite(value) || value < 0) {
+      showError("Setting value must be a valid non-negative number.");
+      return;
+    }
+
+    try {
+      const supabase = await getSupabaseClient();
+      const { error } = await supabase.rpc("admin_update_cost_setting", {
+        target_setting_key: key,
+        new_setting_value: value
+      });
+
+      if (error) throw error;
+
+      showCostsActionMessage("Cost setting saved. Estimates refreshed.", "success");
+      await loadCosts();
+    } catch (err) {
+      console.error("Save cost setting failed:", err);
+      showError(err?.message || "Failed to save cost setting.");
+    }
+  }
+
   function filteredAlerts() {
     const search=String(document.getElementById("costAlertSearchInput")?.value||"").toLowerCase().trim();
     const filter=String(document.getElementById("costAlertFilter")?.value||"open").toLowerCase().trim();
@@ -124,7 +234,7 @@
       showCostsActionMessage("Cost check completed. No risk alerts found.", "success");
     }
   }
-  function render(){ renderSummary(); renderCostBreakdown(); renderUsageSnapshot(); renderAlerts(); }
+  function render(){ renderSummary(); renderCostBreakdown(); renderUsageSnapshot(); renderCostSettings(); renderAlerts(); }
   async function loadCosts(){ hideError(); const supabase=await getSupabaseClient(); await fetchCosts(supabase); render(); }
   function bindEvents(){
     const refreshBtn=document.getElementById("refreshCostsBtn"), generateBtn=document.getElementById("generateCostAlertsBtn"), search=document.getElementById("costAlertSearchInput"), filter=document.getElementById("costAlertFilter");
@@ -134,5 +244,5 @@
     if(filter&&filter.dataset.bound!=="true"){ filter.dataset.bound="true"; filter.addEventListener("change", renderAlerts); }
   }
   async function init(){ bindEvents(); try{ await loadCosts(); }catch(err){ console.error("Admin costs load failed:", err); showError(err?.message||"Failed to load costs."); costOverview=null; costAlerts=[]; render(); } }
-  window.AdminCosts={init, loadCosts, generateCostAlerts};
+  window.AdminCosts={init, loadCosts, generateCostAlerts, saveCostSetting};
 })();
