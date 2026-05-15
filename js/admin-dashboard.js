@@ -33,6 +33,8 @@
         "amount"
       ],
       recentPayments: [
+        "id,amount,status,created_at",
+        "id,amount,created_at",
         "id,amount"
       ]
     },
@@ -169,12 +171,25 @@
   }
 
   function getPaymentStatus(row) {
-    return String(getFirstValue(row, [
+    const explicitStatus = getFirstValue(row, [
       "status",
       "payment_status",
       "razorpay_status",
       "purchase_status"
-    ]) || "unknown").toUpperCase();
+    ]);
+
+    if (explicitStatus) {
+      return String(explicitStatus).toUpperCase();
+    }
+
+    const sourceTable = String(row?.source_table || "").trim().toLowerCase();
+    const amount = getPaymentAmount(row);
+
+    if (sourceTable === "image_purchases" && amount > 0) {
+      return "SUCCESS";
+    }
+
+    return "UNKNOWN";
   }
 
   function isSuccessfulPayment(row) {
@@ -339,22 +354,13 @@
   }
 
   async function fetchPendingPayoutsCount(supabase) {
-    try {
-      const { count, error } = await supabase
-        .from("payout_requests")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending");
-
-      if (error) {
-        console.error("Pending payouts count failed:", error);
-        return 0;
-      }
-
-      return Number(count || 0);
-    } catch (err) {
-      console.error("Pending payouts count error:", err);
-      return 0;
-    }
+    /*
+      Payout module is not wired yet. Keeping this function in place preserves the
+      dashboard architecture without probing optional payout tables and creating
+      production console 400 errors.
+    */
+    void supabase;
+    return 0;
   }
 
   async function fetchRecentUsers(supabase) {
@@ -480,7 +486,12 @@
     list.innerHTML = payments.map((payment) => {
       const amount = getPaymentAmount(payment);
       const status = getPaymentStatus(payment);
-      const source = String(payment?.source_table || "payments").replace(/_/g, " ");
+      const sourceTable = String(payment?.source_table || "payments");
+      const source = sourceTable === "image_purchases"
+        ? "photo sale"
+        : sourceTable === "template_purchases"
+          ? "template purchase"
+          : sourceTable.replace(/_/g, " ");
       const dateValue = getFirstValue(payment, ["created_at", "updated_at", "paid_at", "purchased_at"]);
 
       return `
