@@ -33,9 +33,7 @@
         "amount"
       ],
       recentPayments: [
-        "id,amount,status,created_at",
-        "id,amount,created_at",
-        "id,amount"
+        "id,amount,created_at"
       ]
     },
     template_purchases: {
