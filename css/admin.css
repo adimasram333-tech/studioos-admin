@@ -225,3 +225,256 @@ body{
     gap:0.55rem;
   }
 }
+
+/* ================================
+   StudioOS Admin Mobile Responsive Layer
+   Final shared responsive hardening
+================================ */
+
+html,
+body{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+#adminApp{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+img,
+canvas,
+svg,
+video{
+  max-width:100%;
+}
+
+input,
+select,
+textarea,
+button{
+  max-width:100%;
+}
+
+.admin-panel,
+.admin-glass,
+.admin-card,
+.admin-list,
+.admin-list-item,
+.admin-muted{
+  max-width:100%;
+}
+
+.admin-list-item > *{
+  min-width:0;
+}
+
+.admin-list-title,
+.admin-list-subtitle,
+.admin-card-value,
+.admin-panel-title,
+.admin-panel-subtitle{
+  overflow-wrap:anywhere;
+}
+
+@media (max-width: 768px){
+  header .max-w-7xl{
+    padding-left:1rem;
+    padding-right:1rem;
+  }
+
+  header .flex{
+    min-width:0;
+  }
+
+  header h1{
+    font-size:1.05rem;
+    line-height:1.35rem;
+  }
+
+  header a,
+  header button{
+    padding:0.55rem 0.75rem !important;
+    font-size:0.76rem !important;
+    border-radius:0.75rem !important;
+    white-space:nowrap;
+  }
+
+  main.max-w-7xl{
+    padding-left:0.85rem;
+    padding-right:0.85rem;
+    padding-top:1rem;
+    padding-bottom:1.25rem;
+  }
+
+  .admin-glass{
+    border-radius:1.25rem !important;
+    padding:1rem !important;
+  }
+
+  .admin-card{
+    min-height:6.6rem;
+    padding:1rem;
+    border-radius:1.15rem;
+  }
+
+  .admin-card-label{
+    font-size:0.66rem;
+    line-height:0.9rem;
+    letter-spacing:0.11em;
+  }
+
+  .admin-card-value{
+    font-size:1.45rem;
+    line-height:1.75rem;
+  }
+
+  .admin-panel{
+    padding:0.85rem;
+    border-radius:1.15rem;
+  }
+
+  .admin-panel-header{
+    flex-direction:column;
+    gap:0.6rem;
+    padding-bottom:0.75rem;
+  }
+
+  .admin-panel-title{
+    font-size:0.95rem;
+    line-height:1.25rem;
+  }
+
+  .admin-panel-subtitle{
+    font-size:0.72rem;
+    line-height:1.05rem;
+  }
+
+  .admin-list{
+    gap:0.58rem;
+    padding-top:0.72rem;
+  }
+
+  .admin-list-item{
+    padding:0.78rem;
+    border-radius:0.95rem;
+  }
+
+  .admin-list-title{
+    font-size:0.84rem;
+    line-height:1.12rem;
+  }
+
+  .admin-list-subtitle{
+    font-size:0.7rem;
+    line-height:1rem;
+  }
+
+  .admin-badge{
+    font-size:0.62rem;
+    line-height:0.78rem;
+    padding:0.26rem 0.48rem;
+  }
+
+  .admin-action-btn{
+    padding:0.8rem 0.85rem;
+    font-size:0.8rem;
+    border-radius:0.9rem;
+  }
+
+  /* Inline grid rows used by admin JS modules */
+  .admin-list-item[style*="grid-template-columns"],
+  #earningsList .admin-list-item,
+  #payoutRequestsList .admin-list-item,
+  #costAlertsList .admin-list-item,
+  #costSettingsList .admin-list-item{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    gap:0.65rem !important;
+  }
+
+  .admin-list-item[style*="grid-template-columns"] > div,
+  .admin-list-item[style*="grid-template-columns"] > span,
+  .admin-list-item[style*="grid-template-columns"] > button,
+  #earningsList .admin-list-item > div,
+  #payoutRequestsList .admin-list-item > div,
+  #costAlertsList .admin-list-item > div,
+  #costSettingsList .admin-list-item > div{
+    width:100% !important;
+    min-width:0 !important;
+    text-align:left !important;
+  }
+
+  #earningsList > div:first-child,
+  #payoutRequestsList > div:first-child,
+  #costAlertsList > div:first-child{
+    display:none !important;
+  }
+
+  #costSettingsList .admin-list-item{
+    grid-template-columns:1fr !important;
+  }
+
+  #costSettingsList input{
+    width:100% !important;
+  }
+
+  #costSettingsList button{
+    width:100% !important;
+  }
+
+  #costAlertSearchInput,
+  #costAlertFilter{
+    width:100% !important;
+  }
+}
+
+@media (max-width: 480px){
+  header .max-w-7xl{
+    align-items:flex-start;
+  }
+
+  header .flex.items-center.gap-3{
+    gap:0.45rem;
+  }
+
+  header a,
+  header button{
+    padding:0.48rem 0.62rem !important;
+    font-size:0.7rem !important;
+  }
+
+  main.max-w-7xl{
+    padding-left:0.65rem;
+    padding-right:0.65rem;
+  }
+
+  .admin-glass{
+    padding:0.85rem !important;
+  }
+
+  .admin-card{
+    min-height:6rem;
+  }
+
+  .admin-card-value{
+    font-size:1.28rem;
+    line-height:1.55rem;
+  }
+
+  .admin-panel{
+    padding:0.75rem;
+  }
+
+  .admin-muted{
+    font-size:0.78rem;
+    padding:0.75rem;
+  }
+
+  .admin-action-btn{
+    width:100%;
+  }
+}
