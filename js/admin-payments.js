@@ -447,10 +447,22 @@
             <button type="button" class="admin-list-title" style="background:transparent;border:0;padding:0;color:#ffffff;font:inherit;font-weight:800;text-align:left;cursor:pointer;">${escapeHtml(getDisplayName(row))}</button>
             <div class="admin-list-subtitle">${escapeHtml(getDisplaySubtitle(row))} · Sales Count: ${escapeHtml(formatNumber(row?.total_photo_sales_count))}</div>
           </div>
-          <div style="min-width:6.5rem;text-align:right;font-weight:900;color:#ffffff;">${escapeHtml(formatCurrency(row?.gross_photo_sales))}</div>
-          <div style="min-width:7.5rem;text-align:right;font-weight:900;color:#ffffff;">${escapeHtml(formatCurrency(row?.photographer_earnings))}</div>
-          <div style="min-width:7.5rem;text-align:right;font-weight:900;color:#ffffff;">${escapeHtml(formatCurrency(row?.platform_earnings))}</div>
-          <div style="min-width:7.5rem;text-align:right;font-weight:900;color:#ffffff;">${escapeHtml(formatCurrency(row?.available_balance))}</div>
+          <div class="admin-mobile-metric" style="min-width:6.5rem;text-align:right;font-weight:900;color:#ffffff;">
+            <span class="admin-mobile-metric-label">Sales</span>
+            <span>${escapeHtml(formatCurrency(row?.gross_photo_sales))}</span>
+          </div>
+          <div class="admin-mobile-metric" style="min-width:7.5rem;text-align:right;font-weight:900;color:#ffffff;">
+            <span class="admin-mobile-metric-label">Earnings</span>
+            <span>${escapeHtml(formatCurrency(row?.photographer_earnings))}</span>
+          </div>
+          <div class="admin-mobile-metric" style="min-width:7.5rem;text-align:right;font-weight:900;color:#ffffff;">
+            <span class="admin-mobile-metric-label">Platform</span>
+            <span>${escapeHtml(formatCurrency(row?.platform_earnings))}</span>
+          </div>
+          <div class="admin-mobile-metric" style="min-width:7.5rem;text-align:right;font-weight:900;color:#ffffff;">
+            <span class="admin-mobile-metric-label">Available</span>
+            <span>${escapeHtml(formatCurrency(row?.available_balance))}</span>
+          </div>
         </div>
       `;
     }).join("");
@@ -527,7 +539,10 @@
             <div class="admin-list-title">${escapeHtml(getDisplayName(row))}</div>
             <div class="admin-list-subtitle">UPI: ${escapeHtml(requestedUpi)} · Name: ${escapeHtml(requestedName)} · ${escapeHtml(formatDate(row?.created_at))}</div>
           </div>
-          <div style="min-width:6.5rem;text-align:right;font-weight:900;color:#ffffff;">${escapeHtml(formatCurrency(row?.amount))}</div>
+          <div class="admin-mobile-metric" style="min-width:6.5rem;text-align:right;font-weight:900;color:#ffffff;">
+            <span class="admin-mobile-metric-label">Amount</span>
+            <span>${escapeHtml(formatCurrency(row?.amount))}</span>
+          </div>
           <div style="min-width:6.5rem;text-align:center;">
             <span class="${getStatusBadgeClass(status)}">${escapeHtml(getStatusLabel(status))}</span>
           </div>
